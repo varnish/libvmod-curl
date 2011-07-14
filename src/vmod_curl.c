@@ -57,17 +57,6 @@ static void cm_free(struct vmod_curl *c) {
 	c->magic = 0;
 }
 
-static void cm_copy(struct vmod_curl *dst, struct vmod_curl *src) {
-	struct hdr *h;
-
-	dst->magic = VMOD_CURL_MAGIC;
-	dst->status = src->status;
-	dst->error = src->error;
-	VTAILQ_FOREACH(h, &src->headers, list) {
-		VTAILQ_INSERT_HEAD(&dst->headers, h, list);
-	}
-}
-
 int
 init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
@@ -175,15 +164,14 @@ void vmod_fetch(struct sess *sp, const char *url)
 	  assert(vmod_curl_list_sz == ns);
 	  AN(vmod_curl_list);
 	}
-/*	cm_free(&vmod_curl_list[sp->id]);*/
+	cm_free(&vmod_curl_list[sp->id]);
 	cm_init(&vmod_curl_list[sp->id]);
-	cm_copy(&vmod_curl_list[sp->id], &c);
 
-/*	VTAILQ_FOREACH_SAFE(h, &c.headers, list, h2) {
-		VTAILQ_REMOVE(&c.headers, h, list);
-	}
-*/
+	vmod_curl_list[sp->id].status = c.status;
+	vmod_curl_list[sp->id].error = c.error;
+	vmod_curl_list[sp->id].headers = c.headers;
 	AZ(pthread_mutex_unlock(&cl_mtx));
+
 	curl_easy_cleanup(curl_handle);
 }
 
