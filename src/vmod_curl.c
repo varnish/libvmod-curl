@@ -36,21 +36,19 @@ static void cm_init(struct vmod_curl *c) {
 }
 
 static void cm_free(struct vmod_curl *c) {
-	struct hdr *h;
+	struct hdr *h, *h2;
 
 	if (c->magic != VMOD_CURL_MAGIC) {
 		AN(printf("cm_free called with a non-cm object\n"));
 
 	}
 
-	while (!VTAILQ_EMPTY(&c->headers)) {
-		h = VTAILQ_FIRST(&c->headers);
-		VTAILQ_REMOVE(&c->headers, h, list);
+	VTAILQ_FOREACH_SAFE(h, &c->headers, list, h2) {
 		free(h->key);
 		free(h->value);
 		free(h);
+		VTAILQ_REMOVE(&c->headers, h, list);
 	}
-	VTAILQ_INIT(&c->headers);
 
 	c->status = 0;
 	c->error = NULL;
