@@ -74,8 +74,8 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	int i;
 
 	vmod_curl_list = NULL;
-	vmod_curl_list_sz = 1000;
-	vmod_curl_list = malloc(sizeof(struct vmod_curl) * 1001);
+	vmod_curl_list_sz = 256;
+	vmod_curl_list = malloc(sizeof(struct vmod_curl) * 256);
 	AN(vmod_curl_list);
 	for (i = 0 ; i < vmod_curl_list_sz; i++) {
 		cm_init(&vmod_curl_list[i]);
