@@ -162,14 +162,15 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c.status);
 */
 	AZ(pthread_mutex_lock(&cl_mtx));
-	if (vmod_curl_list_sz <= sp->id) {
-		int ns = (sp->id+1 > vmod_curl_list_sz*2 ? sp->id+1 : vmod_curl_list_sz*2);
-		/* resize array */
-		vmod_curl_list = realloc(vmod_curl_list, vmod_curl_list_sz * sizeof(struct vmod_curl));
-		for (; vmod_curl_list_sz <= ns; vmod_curl_list_sz++) {
-			cm_init(&vmod_curl_list[vmod_curl_list_sz]);
-		}
-		AN(vmod_curl_list);
+	while (vmod_curl_list_sz <= sp->id) {
+	  int ns = vmod_curl_list_sz*2;
+	  /* resize array */
+	  vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl));
+	  for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
+		  cm_init(&vmod_curl_list[vmod_curl_list_sz]);
+	  }
+	  assert(vmod_curl_list_sz == ns);
+	  AN(vmod_curl_list);
 	}
 /*	cm_free(&vmod_curl_list[sp->id]);*/
 	cm_init(&vmod_curl_list[sp->id]);
