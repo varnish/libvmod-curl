@@ -155,12 +155,12 @@ void vmod_fetch(struct sess *sp, const char *url)
 
 	cr = curl_easy_perform(curl_handle);
 
-/*	if (cr != 0) {
+	if (cr != 0) {
 		c.error = curl_easy_strerror(cr);
 	}
 
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c.status);
-*/
+
 	AZ(pthread_mutex_lock(&cl_mtx));
 	while (vmod_curl_list_sz <= sp->id) {
 	  int ns = vmod_curl_list_sz*2;
