@@ -26,9 +26,7 @@ static struct vmod_curl *vmod_curl_list;
 int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-
 static void cm_init(struct vmod_curl *c) {
-//	printf("zz:%s %d %p \n", __FILE__, __LINE__, c);
 	c->magic = VMOD_CURL_MAGIC;
 	c->status = 0;
 	c->error = NULL;
