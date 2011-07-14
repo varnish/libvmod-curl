@@ -3,6 +3,7 @@
 #include <ctype.h>
 
 #include "vrt.h"
+#include "vsb.h"
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
@@ -20,6 +21,7 @@ struct vmod_curl {
 	long		status;
 	const char	*error;
 	VTAILQ_HEAD(, hdr) headers;
+	struct vsb	*body;
 };
 
 static struct vmod_curl *vmod_curl_list;
@@ -31,6 +33,7 @@ static void cm_init(struct vmod_curl *c) {
 	c->status = 0;
 	c->error = NULL;
 	VTAILQ_INIT(&c->headers);
+	c->body = VSB_new_auto();
 }
 
 static void cm_free(struct vmod_curl *c) {
@@ -50,6 +53,7 @@ static void cm_free(struct vmod_curl *c) {
 
 	c->status = 0;
 	c->error = NULL;
+	VSB_delete(c->body);
 	c->magic = 0;
 }
 
@@ -70,7 +74,11 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 
 static size_t recv_data(void *ptr, size_t size, size_t nmemb, void *s)
 {
-	(void)s;
+	struct vmod_curl *vc;
+
+	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
+
+	VSB_bcat(vc->body, ptr, size * nmemb);
 	return size * nmemb;
 }
 
@@ -149,6 +157,8 @@ void vmod_fetch(struct sess *sp, const char *url)
 
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c.status);
 
+	VSB_finish(c.body);
+
 	AZ(pthread_mutex_lock(&cl_mtx));
 	while (vmod_curl_list_sz <= sp->id) {
 	  int ns = vmod_curl_list_sz*2;
@@ -166,6 +176,7 @@ void vmod_fetch(struct sess *sp, const char *url)
 	vmod_curl_list[sp->id].status = c.status;
 	vmod_curl_list[sp->id].error = c.error;
 	vmod_curl_list[sp->id].headers = c.headers;
+	vmod_curl_list[sp->id].body = c.body;
 	AZ(pthread_mutex_unlock(&cl_mtx));
 
 	curl_easy_cleanup(curl_handle);
@@ -208,6 +219,15 @@ const char *vmod_header(struct sess *sp, const char *header)
 			break;
 		}
 	}
+	AZ(pthread_mutex_unlock(&cl_mtx));
+	return r;
+}
+
+const char *vmod_body(struct sess *sp) {
+	const char *r;
+
+	AZ(pthread_mutex_lock(&cl_mtx));
+	r = VSB_data(vmod_curl_list[sp->id].body);
 	AZ(pthread_mutex_unlock(&cl_mtx));
 	return r;
 }

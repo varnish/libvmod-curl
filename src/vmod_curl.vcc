@@ -10,3 +10,4 @@ Function VOID free()
 # The HTTP status code
 Function INT status()
 Function STRING error()
+Function STRING body()
