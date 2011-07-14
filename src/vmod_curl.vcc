@@ -1,0 +1,12 @@
+Module curl
+Init init_function
+# Fetch the URL in the first parameter
+Function VOID fetch(STRING)
+# Return the header named in the first argument
+Function STRING header(STRING)
+# Free the memory used by headers. Not needed, will be handled
+# automatically if it's not called.
+Function VOID free()
+# The HTTP status code
+Function INT status()
+Function STRING error()
