@@ -7,7 +7,6 @@
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
-#include "syslog.h"
 
 struct hdr {
 	char *key;
