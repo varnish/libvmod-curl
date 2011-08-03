@@ -1,11 +1,5 @@
-This is an example skeleton for developing out-of-tree Varnish
-vmods. It implements the "Hello, World!" as a vmod callback. Not
-particularly useful in good hello world tradition, but demonstrates how
-to get the glue around a vmod working.
-
-The source tree is based on autotools to configure the building, and
-does also have the necessary bits in place to do functional unit tests
-using the varnishtest tool.
+This vmod provides cURL bindings for Varnish so you can use Varnish
+as an HTTP client and fetch headers and bodies from backends.
 
 Usage:
 ./configure VARNISHSRC=DIR [VMODDIR=DIR]
@@ -23,11 +17,19 @@ make - builds the vmod
 make install - installs your vmod in VMODDIR
 make check - runs the unit tests in src/tests/*.vtc
 
-In your VCL you could then use this vmod along the following lines:
+To use the vmod do something along the lines of:
 
-import example;
+import curl;
 
-sub vcl_deliver {
-	# This sets resp.http.hello to "Hello, World"
-	set resp.http.hello = example.hello("World");
+sub vcl_recv {
+    curl.fetch("http://example.com/test");
+    if (curl.header("X-Foo") == "bar") {
+        …
+    }
+    curl.free();
 }
+
+See src/vmod_curl.vcc for the rest of the callable functions.
+
+Development of this VMOD has been sponsored by the Norwegian music
+service WiMP.
