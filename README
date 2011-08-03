@@ -31,5 +31,5 @@ sub vcl_recv {
 
 See src/vmod_curl.vcc for the rest of the callable functions.
 
-Development of this VMOD has been sponsored by the Norwegian music
-service WiMP.
+Development of this VMOD has been sponsored by the Norwegian company
+Aspiro Music AS for usage on their WiMP music streaming service.
