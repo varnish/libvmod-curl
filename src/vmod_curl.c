@@ -44,10 +44,10 @@ static void cm_free(struct vmod_curl *c) {
 	}
 
 	VTAILQ_FOREACH_SAFE(h, &c->headers, list, h2) {
+		VTAILQ_REMOVE(&c->headers, h, list);
 		free(h->key);
 		free(h->value);
 		free(h);
-		VTAILQ_REMOVE(&c->headers, h, list);
 	}
 
 	c->status = 0;
