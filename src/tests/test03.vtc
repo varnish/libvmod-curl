@@ -1,0 +1,29 @@
+varnishtest "Test example vmod"
+
+server s1 {
+       rxreq
+       txresp -hdr "Foo: bar"
+       rxreq
+       txresp -hdr "Foo: bar"
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_deliver {
+	    curl.fetch("http://localhost:65500");
+	    if (req.restarts < 1) {
+	       return(restart);
+	    }
+	    set resp.http.x-error = curl.error();
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-error == "Couldn't connect to server"
+}
+
+client c1 -run
+client c1 -run

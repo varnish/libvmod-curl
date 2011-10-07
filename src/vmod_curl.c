@@ -174,6 +174,9 @@ void vmod_fetch(struct sess *sp, const char *url)
 
 	c = cm_get(sp);
 
+	cm_clear_headers(c);
+	cm_clear_body(c);
+
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
 
