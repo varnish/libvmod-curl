@@ -17,6 +17,7 @@ struct hdr {
 struct vmod_curl {
 	unsigned	magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
+	unsigned xid;
 	long		status;
 	const char	*error;
 	VTAILQ_HEAD(, hdr) headers;
@@ -54,6 +55,30 @@ static void cm_free(struct vmod_curl *c) {
 	c->error = NULL;
 	VSB_delete(c->body);
 	c->magic = 0;
+}
+
+static struct vmod_curl* cm_get(struct sess *sp) {
+	struct vmod_curl *cm;
+	AZ(pthread_mutex_lock(&cl_mtx));
+
+	while (vmod_curl_list_sz <= sp->id) {
+		int ns = vmod_curl_list_sz*2;
+		/* resize array */
+		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl));
+		for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
+			cm_init(&vmod_curl_list[vmod_curl_list_sz]);
+		}
+		assert(vmod_curl_list_sz == ns);
+		AN(vmod_curl_list);
+	}
+	cm = &vmod_curl_list[sp->id];
+	if (cm->xid != cm->xid) {
+		cm_free(cm);
+		cm_init(cm);
+		cm->xid = sp->xid;
+	}
+	AZ(pthread_mutex_unlock(&cl_mtx));
+	return cm;
 }
 
 int
@@ -130,12 +155,12 @@ void vmod_fetch(struct sess *sp, const char *url)
 	CURL *curl_handle;
 	CURLcode cr;
 
-	struct vmod_curl c;
+	struct vmod_curl *c;
 	char *p;
 	unsigned u, v;
 	struct hdr *h, *h2;
 
-	cm_init(&c);
+	c = cm_get(sp);
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -144,9 +169,9 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL , 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, recv_data);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&c);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)c);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
-	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, (void *)&c);
+	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, (void *)c);
 
 	cr = curl_easy_perform(curl_handle);
 
@@ -154,76 +179,57 @@ void vmod_fetch(struct sess *sp, const char *url)
 		c.error = curl_easy_strerror(cr);
 	}
 
-	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c.status);
+	cr = curl_easy_perform(curl_handle);
 
-	VSB_finish(c.body);
-
-	AZ(pthread_mutex_lock(&cl_mtx));
-	while (vmod_curl_list_sz <= sp->id) {
-	  int ns = vmod_curl_list_sz*2;
-	  /* resize array */
-	  vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl));
-	  for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
-		  cm_init(&vmod_curl_list[vmod_curl_list_sz]);
-	  }
-	  assert(vmod_curl_list_sz == ns);
-	  AN(vmod_curl_list);
+	if (cr != 0) {
+		c->error = curl_easy_strerror(cr);
 	}
-	cm_free(&vmod_curl_list[sp->id]);
-	cm_init(&vmod_curl_list[sp->id]);
 
-	vmod_curl_list[sp->id].status = c.status;
-	vmod_curl_list[sp->id].error = c.error;
-	vmod_curl_list[sp->id].headers = c.headers;
-	vmod_curl_list[sp->id].body = c.body;
-	AZ(pthread_mutex_unlock(&cl_mtx));
+	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c->status);
 
+	VSB_finish(c->body);
 	curl_easy_cleanup(curl_handle);
 }
 
 int vmod_status(struct sess *sp) {
 	int r;
-	AZ(pthread_mutex_lock(&cl_mtx));
-	r = vmod_curl_list[sp->id].status;
-	AZ(pthread_mutex_unlock(&cl_mtx));
+	r = cm_get(sp)->status;
 	return r;
 }
 
 void vmod_free(struct sess *sp) {
-	AZ(pthread_mutex_lock(&cl_mtx));
-	if (vmod_curl_list_sz >= sp->id)
-		cm_free(&vmod_curl_list[sp->id]);
-	AZ(pthread_mutex_unlock(&cl_mtx));
+	cm_free(cm_get(sp));
 }
 
 const char *vmod_error(struct sess *sp) {
-	const char *r;
-	AZ(pthread_mutex_lock(&cl_mtx));
-	if (vmod_curl_list[sp->id].status != 0)
-		r = NULL;
-	r = vmod_curl_list[sp->id].error;
-	AZ(pthread_mutex_unlock(&cl_mtx));
-	return r;
+	struct vmod_curl *c;
+
+	c = cm_get(sp);
+	if (c->status != 0)
+		return(NULL);
+	return(c->error);
 }
 
 const char *vmod_header(struct sess *sp, const char *header)
 {
 	struct hdr *h;
 	const char *r = NULL;
-	AZ(pthread_mutex_lock(&cl_mtx));
+	struct vmod_curl *c;
 
-	VTAILQ_FOREACH(h, &vmod_curl_list[sp->id].headers, list) {
+	c = cm_get(sp);
+
+	VTAILQ_FOREACH(h, &c->headers, list) {
 		if (strcasecmp(h->key, header) == 0) {
 			r = h->value;
 			break;
 		}
 	}
-	AZ(pthread_mutex_unlock(&cl_mtx));
 	return r;
 }
 
 const char *vmod_body(struct sess *sp) {
-	const char *r;
+	return VSB_data(cm_get(sp)->body);
+}
 
 	AZ(pthread_mutex_lock(&cl_mtx));
 	r = VSB_data(vmod_curl_list[sp->id].body);
