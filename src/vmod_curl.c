@@ -7,6 +7,7 @@
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
+#include "vmod_curl.h"
 
 struct hdr {
 	char *key;
@@ -32,21 +33,22 @@ static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void cm_init(struct vmod_curl *c) {
 	c->magic = VMOD_CURL_MAGIC;
-	c->status = 0;
-	c->timeout_ms = -1;
-	c->connect_timeout_ms = -1;
-	c->error = NULL;
 	VTAILQ_INIT(&c->headers);
 	c->body = VSB_new_auto();
+	cm_clear(c);
 }
 
-static void cm_free(struct vmod_curl *c) {
+static void cm_clear_body(struct vmod_curl *c) {
+
+	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
+
+	VSB_clear(c->body);
+}
+
+static void cm_clear_headers(struct vmod_curl *c) {
 	struct hdr *h, *h2;
 
-	if (c->magic != VMOD_CURL_MAGIC) {
-		AN(printf("cm_free called with a non-cm object\n"));
-
-	}
+	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
 	VTAILQ_FOREACH_SAFE(h, &c->headers, list, h2) {
 		VTAILQ_REMOVE(&c->headers, h, list);
@@ -54,13 +56,18 @@ static void cm_free(struct vmod_curl *c) {
 		free(h->value);
 		free(h);
 	}
+}
 
+static void cm_clear(struct vmod_curl *c) {
+	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
+
+	cm_clear_body(c);
+	cm_clear_headers(c);
 	c->status = 0;
+	c->timeout_ms = -1;
+	c->connect_timeout_ms = -1;
 	c->error = NULL;
-	if (c->body)
-		VSB_delete(c->body);
-	c->body = NULL;
-	c->magic = 0;
+	c->xid = 0;
 }
 
 static struct vmod_curl* cm_get(struct sess *sp) {
@@ -79,8 +86,7 @@ static struct vmod_curl* cm_get(struct sess *sp) {
 	}
 	cm = &vmod_curl_list[sp->id];
 	if (cm->xid != sp->xid) {
-		cm_free(cm);
-		cm_init(cm);
+		cm_clear(cm);
 		cm->xid = sp->xid;
 	}
 	AZ(pthread_mutex_unlock(&cl_mtx));
@@ -204,7 +210,7 @@ int vmod_status(struct sess *sp) {
 }
 
 void vmod_free(struct sess *sp) {
-	cm_free(cm_get(sp));
+	cm_clear(cm_get(sp));
 }
 
 const char *vmod_error(struct sess *sp) {
