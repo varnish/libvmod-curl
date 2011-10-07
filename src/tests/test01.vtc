@@ -3,6 +3,9 @@ varnishtest "Test example vmod"
 server s1 {
        rxreq
        txresp -hdr "Foo: bar"
+       accept
+       rxreq
+       txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
@@ -15,6 +18,8 @@ varnish v1 -vcl+backend {
 	sub vcl_error {
 	    set obj.status = curl.status();
 	    set obj.http.foo = curl.header("foo");
+	    set obj.http.cl = "0";
+	    set obj.http.cl = curl.header("content-length");
         }
 } -start
 
@@ -22,7 +27,17 @@ client c1 {
 	txreq -url "/"
 	rxresp
 	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+}
+
+client c2 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
 	expect resp.status == 200
 }
 
 client c1 -run
+client c2 -run
