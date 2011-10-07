@@ -175,9 +175,9 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL , 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, recv_data);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)c);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, c);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
-	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, (void *)c);
+	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, c);
 
 	if (c->timeout_ms > 0)
 	  curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
