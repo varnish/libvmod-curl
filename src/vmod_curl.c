@@ -19,6 +19,8 @@ struct vmod_curl {
 #define VMOD_CURL_MAGIC 0xBBB0C87C
 	unsigned xid;
 	long		status;
+	long		timeout_ms;
+	long		connect_timeout_ms;
 	const char	*error;
 	VTAILQ_HEAD(, hdr) headers;
 	struct vsb	*body;
@@ -31,6 +33,8 @@ static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static void cm_init(struct vmod_curl *c) {
 	c->magic = VMOD_CURL_MAGIC;
 	c->status = 0;
+	c->timeout_ms = -1;
+	c->connect_timeout_ms = -1;
 	c->error = NULL;
 	VTAILQ_INIT(&c->headers);
 	c->body = VSB_new_auto();
@@ -173,11 +177,11 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, (void *)c);
 
-	cr = curl_easy_perform(curl_handle);
+	if (c->timeout_ms > 0)
+	  curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
 
-	if (cr != 0) {
-		c.error = curl_easy_strerror(cr);
-	}
+	if (c->connect_timeout_ms > 0)
+	  curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
 
 	cr = curl_easy_perform(curl_handle);
 
@@ -231,8 +235,11 @@ const char *vmod_body(struct sess *sp) {
 	return VSB_data(cm_get(sp)->body);
 }
 
-	AZ(pthread_mutex_lock(&cl_mtx));
-	r = VSB_data(vmod_curl_list[sp->id].body);
-	AZ(pthread_mutex_unlock(&cl_mtx));
-	return r;
+void vmod_set_timeout(struct sess *sp, int timeout) {
+	cm_get(sp)->timeout_ms = timeout;
 }
+
+void vmod_set_connect_timeout(struct sess *sp, int timeout) {
+	cm_get(sp)->connect_timeout_ms = timeout;
+}
+

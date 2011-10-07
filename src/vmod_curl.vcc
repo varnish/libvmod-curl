@@ -11,3 +11,6 @@ Function VOID free()
 Function INT status()
 Function STRING error()
 Function STRING body()
+
+Function VOID set_timeout(INT)
+Function VOID set_connect_timeout(INT)
