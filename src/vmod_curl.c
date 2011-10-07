@@ -57,7 +57,9 @@ static void cm_free(struct vmod_curl *c) {
 
 	c->status = 0;
 	c->error = NULL;
-	VSB_delete(c->body);
+	if (c->body)
+		VSB_delete(c->body);
+	c->body = NULL;
 	c->magic = 0;
 }
 
