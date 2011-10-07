@@ -78,7 +78,7 @@ static struct vmod_curl* cm_get(struct sess *sp) {
 		AN(vmod_curl_list);
 	}
 	cm = &vmod_curl_list[sp->id];
-	if (cm->xid != cm->xid) {
+	if (cm->xid != sp->xid) {
 		cm_free(cm);
 		cm_init(cm);
 		cm->xid = sp->xid;
