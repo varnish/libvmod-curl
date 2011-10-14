@@ -22,7 +22,12 @@ struct vmod_curl {
 	long		status;
 	long		timeout_ms;
 	long		connect_timeout_ms;
+	char		flags;
+#define VC_VERIFY_PEER (1 << 0)
+#define VC_VERIFY_HOST (1 << 1)
 	const char	*error;
+	const char	*cafile;
+	const char	*capath;
 	VTAILQ_HEAD(, hdr) headers;
 	struct vsb	*body;
 };
@@ -66,6 +71,9 @@ static void cm_clear(struct vmod_curl *c) {
 	c->status = 0;
 	c->timeout_ms = -1;
 	c->connect_timeout_ms = -1;
+	c->flags = 0;
+	c->cafile = NULL;
+	c->capath = NULL;
 	c->error = NULL;
 	c->xid = 0;
 }
@@ -194,6 +202,26 @@ void vmod_fetch(struct sess *sp, const char *url)
 	if (c->connect_timeout_ms > 0)
 	  curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
 
+	if (c->flags & VC_VERIFY_PEER) {
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
+	} else {
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+	}
+
+	if (c->flags & VC_VERIFY_HOST) {
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 1L);
+	} else {
+		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+	}
+
+	if (c->cafile) {
+		      curl_easy_setopt(curl_handle, CURLOPT_CAINFO, c->cafile);
+	}
+
+	if (c->capath) {
+		      curl_easy_setopt(curl_handle, CURLOPT_CAPATH, c->capath);
+	}
+
 	cr = curl_easy_perform(curl_handle);
 
 	if (cr != 0) {
@@ -252,5 +280,29 @@ void vmod_set_timeout(struct sess *sp, int timeout) {
 
 void vmod_set_connect_timeout(struct sess *sp, int timeout) {
 	cm_get(sp)->connect_timeout_ms = timeout;
+}
+
+void vmod_set_ssl_verify_peer(struct sess *sp, int verify) {
+	if (verify) {
+		cm_get(sp)->flags |= VC_VERIFY_PEER;
+	} else {
+		cm_get(sp)->flags &= ~VC_VERIFY_PEER;
+	}
+}
+
+void vmod_set_ssl_verify_host(struct sess *sp, int verify) {
+	if (verify) {
+		cm_get(sp)->flags |= VC_VERIFY_HOST;
+	} else {
+		cm_get(sp)->flags &= ~VC_VERIFY_HOST;
+	}
+}
+
+void vmod_set_ssl_cafile(struct sess *sp, const char *path) {
+	cm_get(sp)->cafile = path;
+}
+
+void vmod_set_ssl_capath(struct sess *sp, const char *path) {
+	cm_get(sp)->capath = path;
 }
 

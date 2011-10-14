@@ -14,3 +14,8 @@ Function STRING body()
 
 Function VOID set_timeout(INT)
 Function VOID set_connect_timeout(INT)
+
+Function VOID set_ssl_verify_peer(INT)
+Function VOID set_ssl_verify_host(INT)
+Function VOID set_ssl_cafile(STRING)
+Function VOID set_ssl_capath(STRING)
