@@ -1,0 +1,84 @@
+varnishtest "Test strange headers"
+
+server s1 {
+	rxreq
+	txresp -hdr "Foo: asdf   "
+
+	accept
+	rxreq
+	txresp -hdr "Foo: "
+
+	accept
+	rxreq
+	txresp -hdr "Foo:"
+
+	accept
+	rxreq
+	txresp -hdr ":"
+
+	accept
+	rxreq
+	txresp -hdr "Foo"
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_recv {
+		curl.fetch("http://${s1_addr}:${s1_port}");
+		error 200;
+	}
+
+	sub vcl_error {
+		set obj.http.x-status = curl.status();
+		if (curl.error()) {
+			set obj.http.x-error = curl.error();
+		} else {
+			set obj.http.x-error = "";
+		}
+		if (curl.header("foo")) {
+			set obj.http.x-foo = curl.header("foo");
+		} else {
+			set obj.http.x-foo = "";
+		}
+	}
+} -start
+
+client c1 {
+	txreq -url "/test1"
+	rxresp
+	expect resp.http.x-status == 200
+	expect resp.http.x-error == ""
+	expect resp.http.x-foo == "asdf"
+} -run
+
+client c2 {
+	txreq -url "/test2"
+	rxresp
+	expect resp.http.x-status == 200
+	expect resp.http.x-error == ""
+	expect resp.http.x-foo == ""
+} -run
+
+client c3 {
+	txreq -url "/test3"
+	rxresp
+	expect resp.http.x-status == 200
+	expect resp.http.x-error == ""
+	expect resp.http.x-foo == ""
+} -run
+
+client c4 {
+	txreq -url "/test4"
+	rxresp
+	expect resp.http.x-status == 200
+	expect resp.http.x-error == ""
+	expect resp.http.x-foo == ""
+} -run
+
+client c5 {
+	txreq -url "/test5"
+	rxresp
+	expect resp.http.x-status == 200
+	expect resp.http.x-error == ""
+	expect resp.http.x-foo == ""
+} -run

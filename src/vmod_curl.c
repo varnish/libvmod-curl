@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <ctype.h>
+#include <stddef.h>
 
 #include "vrt.h"
 #include "vsb.h"
@@ -135,39 +136,36 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
 
-	split = strchr(ptr, ':');
-	if (!split) {
-	  return size * nmemb;
-	}
+	split = memchr(ptr, ':', size * nmemb);
+	if (split == NULL)
+		return (size * nmemb);
+
+	keylen = split - (char *)ptr;
+	assert(keylen >= 0);
+	if (keylen == 0)
+		return (size * nmemb);
 
 	h = calloc(1, sizeof(struct hdr));
 	AN(h);
-
-	keylen = split - (char*)ptr;
-	assert(keylen > 0);
-	vallen = size*nmemb - keylen;
-
 	h->key = strndup(ptr, keylen);
 	AN(h->key);
-	split++;
-	while (isspace(*split)) {
+
+	vallen = size*nmemb - keylen;
+	assert(vallen > 0);	/* Counts ':' so always larger than 0 */
+	split++;		/* Drop ':' */
+	vallen--;
+	while (vallen > 0 && isspace(*split)) {
 		split++;
 		vallen--;
 	}
-	e = split+vallen - 1 - 1 ;
-	assert(e > split);
-	while (isspace(*e)) {
-		*e = '\0';
-		e--;
+	while (vallen > 0 && isspace(*(split + vallen - 1)))
 		vallen--;
-	}
-	assert(vallen > 0 < 100);
 	h->value = strndup(split, vallen);
 	AN(h->value);
 
 	VTAILQ_INSERT_HEAD(&vc->headers, h, list);
 
-	return size * nmemb;
+	return (size * nmemb);
 }
 
 void vmod_fetch(struct sess *sp, const char *url)
