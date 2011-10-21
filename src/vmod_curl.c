@@ -132,7 +132,7 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	struct vmod_curl *vc;
 	struct hdr *h;
 	char *split, *e;
-	size_t keylen, vallen;
+	ptrdiff_t keylen, vallen;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
 
