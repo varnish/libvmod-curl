@@ -304,3 +304,38 @@ void vmod_set_ssl_capath(struct sess *sp, const char *path) {
 	cm_get(sp)->capath = path;
 }
 
+const char *vmod_escape(struct sess *sp, const char *str) {
+	char *esc, *r;
+
+	CURL *curl_handle;
+	CURLcode cr;
+
+	curl_handle = curl_easy_init();
+	AN(curl_handle);
+
+	esc = curl_easy_escape(curl_handle, str, 0);
+	AN(esc);
+	r = WS_Dup(sp->ws, esc);
+	curl_free(esc);
+	curl_easy_cleanup(curl_handle);
+
+	return r;
+}
+
+const char *vmod_unescape(struct sess *sp, const char *str) {
+	char *tmp, *r;
+
+	CURL *curl_handle;
+	CURLcode cr;
+
+	curl_handle = curl_easy_init();
+	AN(curl_handle);
+
+	tmp = curl_easy_unescape(curl_handle, str, 0, NULL);
+	AN(tmp);
+	r = WS_Dup(sp->ws, tmp);
+	curl_free(tmp);
+	curl_easy_cleanup(curl_handle);
+
+	return r;
+}

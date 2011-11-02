@@ -1,0 +1,24 @@
+varnishtest "curl: string escape"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_deliver {
+	    set resp.http.x-escaped = curl.escape({"abcd%#=/[]"});
+	    set resp.http.x-unescaped = curl.unescape(resp.http.x-escaped);
+	}
+} -start
+
+client c1 {
+	txreq
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-escaped == "abcd%25%23%3D%2F%5B%5D"
+	expect resp.http.x-unescaped == "abcd%#=/[]"
+}
+
+client c1 -run
