@@ -33,7 +33,7 @@ struct vmod_curl {
 	struct vsb	*body;
 };
 
-static struct vmod_curl *vmod_curl_list;
+static struct vmod_curl **vmod_curl_list;
 int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -86,14 +86,15 @@ static struct vmod_curl* cm_get(struct sess *sp) {
 	while (vmod_curl_list_sz <= sp->id) {
 		int ns = vmod_curl_list_sz*2;
 		/* resize array */
-		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl));
+		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
 		for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
-			cm_init(&vmod_curl_list[vmod_curl_list_sz]);
+			vmod_curl_list[vmod_curl_list_sz] = malloc(sizeof(struct vmod_curl));
+			cm_init(vmod_curl_list[vmod_curl_list_sz]);
 		}
 		assert(vmod_curl_list_sz == ns);
 		AN(vmod_curl_list);
 	}
-	cm = &vmod_curl_list[sp->id];
+	cm = vmod_curl_list[sp->id];
 	if (cm->xid != sp->xid) {
 		cm_clear(cm);
 		cm->xid = sp->xid;
@@ -109,10 +110,11 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 
 	vmod_curl_list = NULL;
 	vmod_curl_list_sz = 256;
-	vmod_curl_list = malloc(sizeof(struct vmod_curl) * 256);
+	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * 256);
 	AN(vmod_curl_list);
 	for (i = 0 ; i < vmod_curl_list_sz; i++) {
-		cm_init(&vmod_curl_list[i]);
+		vmod_curl_list[i] = malloc(sizeof(struct vmod_curl));
+		cm_init(vmod_curl_list[i]);
 	}
 	return (curl_global_init(CURL_GLOBAL_ALL));
 }
