@@ -1,0 +1,23 @@
+varnishtest "curl: add_header"
+
+server s1 {
+	rxreq
+	expect req.http.foo == "bar"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_recv {
+		curl.add_header("foo: bar");
+		curl.fetch("http://${s1_addr}:${s1_port}");
+		error 200;
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+}
+
+client c1 -run
