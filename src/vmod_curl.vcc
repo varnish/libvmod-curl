@@ -20,6 +20,7 @@ Function VOID set_ssl_verify_host(INT)
 Function VOID set_ssl_cafile(STRING)
 Function VOID set_ssl_capath(STRING)
 
+# Add / Remove request headers
 Function VOID add_header(STRING)
 Function VOID unset_header(STRING)
 
