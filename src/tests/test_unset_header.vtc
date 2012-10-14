@@ -1,0 +1,32 @@
+varnishtest "curl: unset_header"
+
+server s1 {
+	rxreq
+	expect req.http.foo != "bar"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_recv {
+		curl.add_header("foo: bar");
+		curl.unset_header("foo");
+		curl.fetch("http://${s1_addr}:${s1_port}");
+		error 404;
+	}
+
+	sub vcl_error {
+		set obj.status = curl.status();
+		set obj.http.cl = "0";
+		set obj.http.cl = curl.header("content-length");
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+}
+
+client c1 -run
