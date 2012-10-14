@@ -352,6 +352,29 @@ void vmod_add_header(struct sess *sp, const char *value)
 	VTAILQ_INSERT_HEAD(&c->req_headers, rh, list);
 }
 
+void vmod_unset_header(struct sess *sp, const char *header)
+{
+	struct vmod_curl *c;
+	struct req_hdr *rh;
+	char *split, *s;
+	ptrdiff_t keylen;
+
+	c = cm_get(sp);
+
+	VTAILQ_FOREACH(rh, &c->req_headers, list) {
+		split = strchr(rh->value, ':');
+		if (split == NULL)
+			keylen = strlen(rh->value);
+		else
+			keylen = split - rh->value;
+		s = strndup(rh->value, keylen);
+		if (strcasecmp(s, header) == 0) {
+			VTAILQ_REMOVE(&c->req_headers, rh, list);
+		}
+		free(s);
+	}
+}
+
 const char *vmod_escape(struct sess *sp, const char *str) {
 	char *esc, *r;
 
