@@ -72,14 +72,14 @@ static void cm_clear_headers(struct vmod_curl *c) {
 }
 
 static void cm_clear_req_headers(struct vmod_curl *c) {
-	struct req_hdr *h, *h2;
+	struct req_hdr *rh, *rh2;
 
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
-	VTAILQ_FOREACH_SAFE(h, &c->req_headers, list, h2) {
-		VTAILQ_REMOVE(&c->req_headers, h, list);
-		free(h->value);
-		free(h);
+	VTAILQ_FOREACH_SAFE(rh, &c->req_headers, list, rh2) {
+		VTAILQ_REMOVE(&c->req_headers, rh, list);
+		free(rh->value);
+		free(rh);
 	}
 }
 
@@ -370,6 +370,8 @@ void vmod_unset_header(struct sess *sp, const char *header)
 		s = strndup(rh->value, keylen);
 		if (strcasecmp(s, header) == 0) {
 			VTAILQ_REMOVE(&c->req_headers, rh, list);
+			free(rh->value);
+			free(rh);
 		}
 		free(s);
 	}
