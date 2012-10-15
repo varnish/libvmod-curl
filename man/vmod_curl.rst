@@ -54,7 +54,7 @@ Example
         ::
                 curl.fetch("http://example.com/test");
                 if (curl.header("X-Foo") == "bar") {
-                        // ...
+                // ...
                 }
                 curl.free();
 
@@ -84,7 +84,7 @@ Example
         ::
                 curl.fetch("http://example.com/test");
                 if (curl.status() == 404) {
-                        // ...
+                // ...
                 }
                 curl.free();
 
@@ -188,7 +188,7 @@ Description
         Adds a custom request header
 
 unset_header
-----------
+------------
 
 Prototype
         ::
