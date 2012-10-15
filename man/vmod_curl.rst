@@ -218,6 +218,8 @@ Example
                 curl.add_header("Accept:");
                 // add X-curl-Request header with no content
                 curl.add_header("X-curl-Request: " + curl.unescape("%22%22"));
+                // alternative using long string syntax
+                curl.add_header({"X-curl-Request: """});
 
 unset_header
 ------------
