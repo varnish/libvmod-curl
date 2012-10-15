@@ -176,6 +176,28 @@ Return value
 Description
         Sets the CURLOPT_CAPATH option to the value of the first argument.
 
+add_header
+----------
+
+Prototype
+        ::
+                add_header(STRING)
+Return value
+        VOID
+Description
+        Adds a custom request header
+
+unset_header
+----------
+
+Prototype
+        ::
+                unset_header(STRING)
+Return value
+        VOID
+Description
+        Removes all custom request header fields matching the given header name
+
 escape
 ------
 
