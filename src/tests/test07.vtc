@@ -10,6 +10,7 @@ server s1 {
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
+		curl.add_header("foobar: bar");
 		curl.add_header("foo: bar");
 		curl.add_header("foobar: bar");
 		curl.unset_header("foobar");
