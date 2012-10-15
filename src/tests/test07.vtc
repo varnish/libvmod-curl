@@ -2,7 +2,8 @@ varnishtest "curl: unset_header"
 
 server s1 {
 	rxreq
-	expect req.http.foo != "bar"
+	expect req.http.foo == "bar"
+	expect req.http.foobar != "bar"
 	txresp
 } -start
 
@@ -10,7 +11,8 @@ varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
 		curl.add_header("foo: bar");
-		curl.unset_header("foo");
+		curl.add_header("foobar: bar");
+		curl.unset_header("foobar");
 		curl.fetch("http://${s1_addr}:${s1_port}");
 		error 404;
 	}
