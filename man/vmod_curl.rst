@@ -231,8 +231,9 @@ Prototype
 Return value
         VOID
 Description
-        Removes custom request header fields matching the given header name.
-        Only headers added by add_header() are removed.
+        Removes all custom request header fields matching the given header name.
+        Only headers added by add_header() can be removed. To disable headers
+        generated internally by libcurl *add* the header with no content.
 Example
         ::
 
