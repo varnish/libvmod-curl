@@ -2,6 +2,7 @@
 
 dist_man_MANS = vmod_example.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)
+EXTRA_DIST = vmod_example.rst
 
 vmod_example.3: vmod_example.rst
 if HAVE_RST2MAN
