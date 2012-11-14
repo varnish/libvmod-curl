@@ -9,7 +9,8 @@ libvmod_curl_la_LDFLAGS = -module -export-dynamic -avoid-version @CURL_LIBS@
 libvmod_curl_la_SOURCES = \
 	vcc_if.c \
 	vcc_if.h \
-	vmod_curl.c
+	vmod_curl.c \
+	vmod_curl.h
 
 vcc_if.c vcc_if.h: $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_curl.vcc
 	@PYTHON@ $(VARNISHSRC)/lib/libvmod_std/vmod.py $(top_srcdir)/src/vmod_curl.vcc
