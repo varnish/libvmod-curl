@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "vrt.h"
 #include "vsb.h"
