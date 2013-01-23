@@ -35,15 +35,9 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-# /opt/varnish/lib/varnish/vmods/
-/usr/lib64/varnish/vmods/
+%{_libdir}/varnish/vmods/
 %doc /usr/share/doc/%{name}/*
-
-%if "%{RHVERSION}" == "EL5"
-/usr/man/man?/*
-%else
-/usr/share/man/man?/*
-%endif
+%{_mandir}/man?/*
 
 %changelog
 * Wed Oct 03 2012 Lasse Karstensen <lasse@varnish-software.com> - 0.1-0.20120918
