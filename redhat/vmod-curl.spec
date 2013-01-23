@@ -9,8 +9,8 @@ Source0: ./libvmod-curl.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # we need EPEL, or at least mhash + mhash-devel from it:
 # rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-7.noarch.rpm
-Requires: varnish > 3.0, libcurl > 7.19.0
-BuildRequires: make, autoconf, automake, libtool, python-docutils, libcurl-devel > 7.19.0
+Requires: varnish > 3.0
+BuildRequires: make, python-docutils, curl-devel > 7.19.0
 
 %description
 libvmod-curl
