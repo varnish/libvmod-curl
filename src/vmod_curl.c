@@ -197,11 +197,21 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, c);
 
-	if (c->timeout_ms > 0)
-	  curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
+	if (c->timeout_ms > 0) {
+#ifdef CURLOPT_TIMEOUT_MS
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
+#else
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, c->timeout_ms / 1000);
+#endif
+	}
 
-	if (c->connect_timeout_ms > 0)
-	  curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
+	if (c->connect_timeout_ms > 0) {
+#ifdef CURLOPT_CONNECTTIMEOUT_MS
+		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
+#else
+		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, c->connect_timeout_ms / 1000);
+#endif
+	}
 
 	if (c->flags & VC_VERIFY_PEER) {
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
