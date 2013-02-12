@@ -2,15 +2,15 @@ varnishtest "Test data timeout"
 
 server s1 {
        rxreq
-       delay 0.5
+       delay 2
        txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
-	    curl.set_timeout(1);
-	    curl.set_connect_timeout(1);
+	    curl.set_timeout(1000);
+	    curl.set_connect_timeout(1000);
 	    curl.fetch("http://${s1_addr}:${s1_port}");
 	    error 200;
         }

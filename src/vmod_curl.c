@@ -11,6 +11,8 @@
 #include "vcc_if.h"
 #include "vmod_curl.h"
 
+#include "config.h"
+
 struct hdr {
 	char *key;
 	char *value;
@@ -198,7 +200,7 @@ void vmod_fetch(struct sess *sp, const char *url)
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, c);
 
 	if (c->timeout_ms > 0) {
-#ifdef CURLOPT_TIMEOUT_MS
+#ifdef CURL_TIMEOUTMS_WORKS
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
 #else
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, c->timeout_ms / 1000);
@@ -206,7 +208,7 @@ void vmod_fetch(struct sess *sp, const char *url)
 	}
 
 	if (c->connect_timeout_ms > 0) {
-#ifdef CURLOPT_CONNECTTIMEOUT_MS
+#ifdef CURL_TIMEOUTMS_WORKS
 		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
 #else
 		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, c->connect_timeout_ms / 1000);

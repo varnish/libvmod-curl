@@ -66,6 +66,33 @@ if test "x$VMODDIR" = x; then
 	fi
 fi
 
+# check if curl supports ms timeout settings
+save_CFLAGS="${CFLAGS}"
+save_LIBS="${LIBS}"
+CFLAGS="${CFLAGS} ${CURL_CFLAGS}"
+LIBS="${LIBS} ${CURL_LIBS}"
+AC_CACHE_CHECK([for curl ms timeout settings],
+  [ac_cv_curl_ms_timeout],
+  [AC_RUN_IFELSE(
+    [AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include <curl/curl.h>
+    ]],[[
+CURL *curl_handle;
+curl_handle = curl_easy_init();
+curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, 10);
+curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, 10);
+return (0);
+    ]])],
+    [ac_cv_curl_ms_timeout=yes],
+    [ac_cv_curl_ms_timeout=no])
+  ])
+if test "$ac_cv_curl_ms_timeout" = yes; then
+	AC_DEFINE([CURL_TIMEOUTMS_WORKS], [1], [Define if curl supports ms timeout])
+fi
+CFLAGS="${save_CFLAGS}"
+LIBS="${save_LIBS}"
+
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
