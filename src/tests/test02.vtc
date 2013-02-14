@@ -18,6 +18,11 @@ varnish v1 -vcl+backend {
 	sub vcl_error {
 	    set obj.http.x-status = curl.status();
 	    set obj.http.x-error = curl.error();
+
+	    # Fix for RHEL5 old curl lib
+	    if (obj.http.x-error == "a timeout was reached") {
+		set obj.http.x-error = "Timeout was reached";
+	    }
         }
 } -start
 
