@@ -350,7 +350,7 @@ void vmod_set_ssl_capath(struct sess *sp, const char *path) {
 	cm_get(sp)->capath = path;
 }
 
-void vmod_add_header(struct sess *sp, const char *value)
+void vmod_header_add(struct sess *sp, const char *value)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
@@ -365,7 +365,7 @@ void vmod_add_header(struct sess *sp, const char *value)
 	VTAILQ_INSERT_HEAD(&c->req_headers, rh, list);
 }
 
-void vmod_unset_header(struct sess *sp, const char *header)
+void vmod_header_unset(struct sess *sp, const char *header)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
