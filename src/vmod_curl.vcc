@@ -19,5 +19,10 @@ Function VOID set_ssl_verify_peer(INT)
 Function VOID set_ssl_verify_host(INT)
 Function VOID set_ssl_cafile(STRING)
 Function VOID set_ssl_capath(STRING)
+
+# Add / Remove request headers
+Function VOID header_add(STRING)
+Function VOID header_unset(STRING)
+
 Function STRING escape(STRING)
 Function STRING unescape(STRING)
