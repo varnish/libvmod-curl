@@ -279,6 +279,7 @@ void vmod_get(struct sess *sp, const char *url)
 
 	if (req_headers)
 		curl_slist_free_all(req_headers);
+	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
 }
 
