@@ -34,6 +34,9 @@ struct vmod_curl {
 	char		flags;
 #define VC_VERIFY_PEER (1 << 0)
 #define VC_VERIFY_HOST (1 << 1)
+	const char	*url;
+	const char	*method;
+	const char	*postfields;
 	const char	*error;
 	const char	*cafile;
 	const char	*capath;
@@ -86,12 +89,18 @@ static void cm_clear_req_headers(struct vmod_curl *c) {
 	}
 }
 
+static void cm_clear_fetch_state(struct vmod_curl *c) {
+	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
+
+	c->method = NULL;
+	cm_clear_body(c);
+	cm_clear_headers(c);
+}
+
 static void cm_clear(struct vmod_curl *c) {
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
-	cm_clear_body(c);
-	cm_clear_headers(c);
-	cm_clear_req_headers(c);
+	cm_clear_fetch_state(c);
 	c->status = 0;
 	c->timeout_ms = -1;
 	c->connect_timeout_ms = -1;
@@ -193,26 +202,16 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
-void vmod_fetch(struct sess *sp, const char *url) {
-	vmod_get(sp, url);
-}
+static void cm_perform(struct vmod_curl *c) {
 
-void vmod_get(struct sess *sp, const char *url)
-{
 	CURL *curl_handle;
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
 
-	struct vmod_curl *c;
 	char *p;
 	unsigned u, v;
 	struct hdr *h, *h2;
-
-	c = cm_get(sp);
-
-	cm_clear_headers(c);
-	cm_clear_body(c);
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -221,9 +220,14 @@ void vmod_get(struct sess *sp, const char *url)
 		req_headers = curl_slist_append(req_headers, rh->value);
 	}
 
+	if (c->method && strcmp(c->method, "POST") == 0) {
+		curl_easy_setopt(curl_handle, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, c->postfields);
+
+	}
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
-	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
 	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL , 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, recv_data);
@@ -281,6 +285,29 @@ void vmod_get(struct sess *sp, const char *url)
 		curl_slist_free_all(req_headers);
 	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
+}
+
+void vmod_fetch(struct sess *sp, const char *url) {
+	vmod_get(sp, url);
+}
+
+void vmod_get(struct sess *sp, const char *url) {
+	struct vmod_curl *c;
+	c = cm_get(sp);
+	cm_clear_fetch_state(c);
+	c->url = url;
+	c->method = "GET";
+	cm_perform(c);
+}
+
+void vmod_post(struct sess *sp, const char *url, const char *postfields) {
+	struct vmod_curl *c;
+	c = cm_get(sp);
+	cm_clear_fetch_state(c);
+	c->url = url;
+	c->method = "POST";
+	c->postfields = postfields;
+	cm_perform(c);
 }
 
 int vmod_status(struct sess *sp) {

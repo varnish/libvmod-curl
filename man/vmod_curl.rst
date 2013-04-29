@@ -38,6 +38,24 @@ Example
                 curl.get("http://example.com/test");
                 curl.free();
 
+post
+----
+
+Prototype
+        ::
+
+                post(STRING, STRING)
+Return value
+        VOID
+Description
+        Performs a cURL request to the given URL.  The second
+	parameter are the POST parameters.
+Example
+        ::
+
+                curl.get("http://example.com/test");
+                curl.free();
+
 header
 ------
 
