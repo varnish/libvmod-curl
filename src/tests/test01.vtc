@@ -1,4 +1,4 @@
-varnishtest "Test example vmod"
+varnishtest "Test curl vmod"
 
 server s1 {
        rxreq
