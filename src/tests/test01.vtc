@@ -11,8 +11,13 @@ server s1 {
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
-	    curl.fetch("http://${s1_addr}:${s1_port}");
-	    error 404;
+	    if (req.http.func == "GET") {
+	    	    curl.get("http://${s1_addr}:${s1_port}");
+	    	    error 404;
+	    } elsif (req.http.func == "FETCH") {
+	    	    curl.fetch("http://${s1_addr}:${s1_port}");
+	    	    error 404;
+	    }
         }
 
 	sub vcl_error {
@@ -24,7 +29,7 @@ varnish v1 -vcl+backend {
 } -start
 
 client c1 {
-	txreq -url "/"
+	txreq -url "/" -hdr "func: GET"
 	rxresp
 	expect resp.http.foo == "bar"
 	expect resp.http.cl == "0"
@@ -32,7 +37,7 @@ client c1 {
 }
 
 client c2 {
-	txreq -url "/"
+	txreq -url "/" -hdr "func: FETCH"
 	rxresp
 	expect resp.http.foo == "bar"
 	expect resp.http.cl == "0"

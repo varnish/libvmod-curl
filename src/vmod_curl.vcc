@@ -1,6 +1,8 @@
 Module curl
 Init init_function
-# Fetch the URL in the first parameter
+# GET the URL in the first parameter
+Function VOID get(STRING)
+# Compatibility name for get
 Function VOID fetch(STRING)
 # Return the header named in the first argument
 Function STRING header(STRING)

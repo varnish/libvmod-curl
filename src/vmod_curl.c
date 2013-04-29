@@ -193,7 +193,11 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
-void vmod_fetch(struct sess *sp, const char *url)
+void vmod_fetch(struct sess *sp, const char *url) {
+	vmod_get(sp, url);
+}
+
+void vmod_get(struct sess *sp, const char *url)
 {
 	CURL *curl_handle;
 	CURLcode cr;

@@ -10,7 +10,7 @@ server s1 {
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_deliver {
-	    curl.fetch("http://localhost:65500");
+	    curl.get("http://localhost:65500");
 	    if (req.restarts < 1) {
 	       return(restart);
 	    }
