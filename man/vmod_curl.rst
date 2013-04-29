@@ -20,21 +20,22 @@ Varnish as an HTTP client and fetch headers and bodies from backends.
 FUNCTIONS
 =========
 
-fetch
------
+get
+---
 
 Prototype
         ::
 
-                fetch(STRING)
+                get(STRING)
 Return value
         VOID
 Description
-        Performs a cURL request to the given URL.
+        Performs a cURL request to the given URL.  A deprecated alias
+	for this function is `get`.
 Example
         ::
 
-                curl.fetch("http://example.com/test");
+                curl.get("http://example.com/test");
                 curl.free();
 
 header
