@@ -53,7 +53,7 @@ Description
 Example
         ::
 
-                curl.get("http://example.com/test");
+                curl.post("http://example.com/test", "a=b");
                 curl.free();
 
 header
