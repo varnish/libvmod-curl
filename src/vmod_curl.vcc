@@ -1,19 +1,26 @@
 Module curl
 Init init_function
+
 # GET the URL in the first parameter
 Function VOID get(STRING)
+
 # Compatibility name for get
 Function VOID fetch(STRING)
+
 # POST the URL in the first parameter with the body fields given in
 # the second
 Function VOID post(STRING, STRING)
+
 # Return the header named in the first argument
 Function STRING header(STRING)
+
 # Free the memory used by headers. Not needed, will be handled
 # automatically if it's not called.
 Function VOID free()
+
 # The HTTP status code
 Function INT status()
+
 Function STRING error()
 Function STRING body()
 
