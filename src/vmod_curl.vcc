@@ -4,6 +4,9 @@ Init init_function
 # GET the URL in the first parameter
 Function VOID get(STRING)
 
+# HEAD the URL in the first parameter
+Function VOID head(STRING)
+
 # Compatibility name for get
 Function VOID fetch(STRING)
 
