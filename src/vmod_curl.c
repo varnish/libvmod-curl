@@ -36,6 +36,7 @@ struct vmod_curl {
 #define VC_VERIFY_HOST (1 << 1)
 	const char	*url;
 	const char	*method;
+	const char	*custom_method;
 	const char	*postfields;
 	const char	*error;
 	const char	*cafile;
@@ -225,6 +226,10 @@ static void cm_perform(struct vmod_curl *c) {
 		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, c->postfields);
 
 	}
+	if (c->custom_method) {
+		curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, c->custom_method);
+
+	}
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
@@ -307,6 +312,13 @@ void vmod_post(struct sess *sp, const char *url, const char *postfields) {
 	c->url = url;
 	c->method = "POST";
 	c->postfields = postfields;
+	cm_perform(c);
+}
+
+void vmod_custom_method(struct sess *sp, const char *method) {
+	struct vmod_curl *c;
+	c = cm_get(sp);
+	c->custom_method = method;
 	cm_perform(c);
 }
 

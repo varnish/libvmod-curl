@@ -11,6 +11,11 @@ Function VOID fetch(STRING)
 # the second
 Function VOID post(STRING, STRING)
 
+# Use this before GET/HEAD/POST to overrid the method sent
+# libcurl will still behave as if you called get/head/post
+# (see CURLOPT_CUSTOMREQUEST)
+Function VOID custom_method(STRING)
+
 # Return the header named in the first argument
 Function STRING header(STRING)
 
