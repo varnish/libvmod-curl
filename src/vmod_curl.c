@@ -45,6 +45,8 @@ struct vmod_curl {
 	struct vsb	*body;
 };
 
+static int initialised = 0;
+
 static struct vmod_curl **vmod_curl_list;
 int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -139,6 +141,11 @@ int
 init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
 	int i;
+
+	if (initialised)
+	  return 0;
+
+	initialised = 1;
 
 	vmod_curl_list = NULL;
 	vmod_curl_list_sz = 256;
