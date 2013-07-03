@@ -286,12 +286,12 @@ static void cm_perform(struct vmod_curl *c) {
 
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c->status);
 
-	VSB_finish(c->body);
 
 	if (req_headers)
 		curl_slist_free_all(req_headers);
 	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
+	VSB_finish(c->body);
 }
 
 void vmod_fetch(struct sess *sp, const char *url) {
