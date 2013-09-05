@@ -1,6 +1,5 @@
-# %define VARNISHVER 3.0.3
 Summary: CURL support for Varnish VCL
-Name: vmod-varnish-%{VARNISHVER}-curl
+Name: vmod-curl
 Version: 0.1
 Release: 1%{?dist}
 License: BSD
