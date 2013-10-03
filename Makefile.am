@@ -1,3 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
 
+doc_DATA = README LICENSE
+
 SUBDIRS = src man
