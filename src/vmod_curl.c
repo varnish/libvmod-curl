@@ -42,6 +42,7 @@ struct vmod_curl {
 	const char	*capath;
 	VTAILQ_HEAD(, hdr) headers;
 	VTAILQ_HEAD(, req_hdr) req_headers;
+	const char 	*proxy;
 	struct vsb	*body;
 };
 
@@ -111,6 +112,7 @@ static void cm_clear(struct vmod_curl *c) {
 	c->capath = NULL;
 	c->error = NULL;
 	c->xid = 0;
+	c->proxy = NULL;
 }
 
 static struct vmod_curl* cm_get(struct sess *sp) {
@@ -241,7 +243,9 @@ static void cm_perform(struct vmod_curl *c) {
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, c);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, c);
-
+	if(c->proxy) {
+		curl_easy_setopt(curl_handle, CURLOPT_PROXY, c->proxy);
+	}
 	if (c->timeout_ms > 0) {
 #ifdef CURL_TIMEOUTMS_WORKS
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
@@ -460,4 +464,8 @@ const char *vmod_unescape(struct sess *sp, const char *str) {
 	curl_easy_cleanup(curl_handle);
 
 	return r;
+}
+
+void vmod_proxy(struct sess *sp, const char *proxy) {
+	cm_get(sp)->proxy = proxy;
 }
