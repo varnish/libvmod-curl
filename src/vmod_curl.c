@@ -6,7 +6,7 @@
 
 #include "vrt.h"
 #include "vsb.h"
-#include "bin/varnishd/cache.h"
+#include "cache/cache.h"
 
 #include "vcc_if.h"
 #include "config.h"
@@ -25,7 +25,7 @@ struct req_hdr {
 struct vmod_curl {
 	unsigned	magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
-	unsigned xid;
+	unsigned vxid;
 	long		status;
 	long		timeout_ms;
 	long		connect_timeout_ms;
@@ -49,6 +49,23 @@ static struct vmod_curl **vmod_curl_list;
 int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static void cm_clear(struct vmod_curl *c);
+
+/* Stolen from 3.0's cache_ws.c  */
+static char *
+WS_Dup(struct ws *ws, const char *s)
+{
+	unsigned l;
+	char *p;
+
+	WS_Assert(ws);
+	l = strlen(s) + 1;
+	p = WS_Alloc(ws, l);
+	if (p != NULL)
+		memcpy(p, s, l);
+	DSL(0x02, SLT_Debug, 0, "WS_Dup(%p, \"%s\") = %p", ws, s, p);
+	WS_Assert(ws);
+	return (p);
+}
 
 static void cm_init(struct vmod_curl *c) {
 	c->magic = VMOD_CURL_MAGIC;
@@ -109,14 +126,14 @@ static void cm_clear(struct vmod_curl *c) {
 	c->cafile = NULL;
 	c->capath = NULL;
 	c->error = NULL;
-	c->xid = 0;
+	c->vxid = 0;
 }
 
-static struct vmod_curl* cm_get(struct sess *sp) {
+static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
 	struct vmod_curl *cm;
 	AZ(pthread_mutex_lock(&cl_mtx));
 
-	while (vmod_curl_list_sz <= sp->id) {
+	while (vmod_curl_list_sz <= ctx->req->sp->fd) {
 		int ns = vmod_curl_list_sz*2;
 		/* resize array */
 		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
@@ -127,10 +144,10 @@ static struct vmod_curl* cm_get(struct sess *sp) {
 		assert(vmod_curl_list_sz == ns);
 		AN(vmod_curl_list);
 	}
-	cm = vmod_curl_list[sp->id];
-	if (cm->xid != sp->xid) {
+	cm = vmod_curl_list[ctx->req->sp->fd];
+	if (cm->vxid != ctx->req->sp->vxid) {
 		cm_clear(cm);
-		cm->xid = sp->xid;
+		cm->vxid = ctx->req->sp->vxid;
 	}
 	AZ(pthread_mutex_unlock(&cl_mtx));
 	return cm;
@@ -293,22 +310,28 @@ static void cm_perform(struct vmod_curl *c) {
 	VSB_finish(c->body);
 }
 
-void vmod_fetch(struct sess *sp, const char *url) {
-	vmod_get(sp, url);
+VCL_VOID
+vmod_fetch(const struct vrt_ctx *ctx, VCL_STRING url)
+{
+	vmod_get(ctx, url);
 }
 
-void vmod_get(struct sess *sp, const char *url) {
+VCL_VOID
+vmod_get(const struct vrt_ctx *ctx, VCL_STRING url)
+{
 	struct vmod_curl *c;
-	c = cm_get(sp);
+	c = cm_get(ctx);
 	cm_clear_fetch_state(c);
 	c->url = url;
 	c->method = "GET";
 	cm_perform(c);
 }
 
-void vmod_post(struct sess *sp, const char *url, const char *postfields) {
+VCL_VOID
+vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields)
+{
 	struct vmod_curl *c;
-	c = cm_get(sp);
+	c = cm_get(ctx);
 	cm_clear_fetch_state(c);
 	c->url = url;
 	c->method = "POST";
@@ -316,32 +339,39 @@ void vmod_post(struct sess *sp, const char *url, const char *postfields) {
 	cm_perform(c);
 }
 
-int vmod_status(struct sess *sp) {
+VCL_INT
+vmod_status(const struct vrt_ctx *ctx)
+{
 	int r;
-	r = cm_get(sp)->status;
+	r = cm_get(ctx)->status;
 	return r;
 }
 
-void vmod_free(struct sess *sp) {
-	cm_clear(cm_get(sp));
+VCL_VOID
+vmod_free(const struct vrt_ctx *ctx)
+{
+	cm_clear(cm_get(ctx));
 }
 
-const char *vmod_error(struct sess *sp) {
+VCL_STRING
+vmod_error(const struct vrt_ctx *ctx)
+{
 	struct vmod_curl *c;
 
-	c = cm_get(sp);
+	c = cm_get(ctx);
 	if (c->status != 0)
 		return(NULL);
 	return(c->error);
 }
 
-const char *vmod_header(struct sess *sp, const char *header)
+VCL_STRING
+vmod_header(const struct vrt_ctx *ctx, VCL_STRING header)
 {
 	struct hdr *h;
 	const char *r = NULL;
 	struct vmod_curl *c;
 
-	c = cm_get(sp);
+	c = cm_get(ctx);
 
 	VTAILQ_FOREACH(h, &c->headers, list) {
 		if (strcasecmp(h->key, header) == 0) {
@@ -352,48 +382,63 @@ const char *vmod_header(struct sess *sp, const char *header)
 	return r;
 }
 
-const char *vmod_body(struct sess *sp) {
-	return VSB_data(cm_get(sp)->body);
+VCL_STRING
+vmod_body(const struct vrt_ctx *ctx)
+{
+	return VSB_data(cm_get(ctx)->body);
 }
 
-void vmod_set_timeout(struct sess *sp, int timeout) {
-	cm_get(sp)->timeout_ms = timeout;
+VCL_VOID
+vmod_set_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
+{
+	cm_get(ctx)->timeout_ms = timeout;
 }
 
-void vmod_set_connect_timeout(struct sess *sp, int timeout) {
-	cm_get(sp)->connect_timeout_ms = timeout;
+VCL_VOID
+vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
+{
+	cm_get(ctx)->connect_timeout_ms = timeout;
 }
 
-void vmod_set_ssl_verify_peer(struct sess *sp, int verify) {
+VCL_VOID
+vmod_set_ssl_verify_peer(const struct vrt_ctx *ctx, VCL_INT verify)
+{
 	if (verify) {
-		cm_get(sp)->flags |= VC_VERIFY_PEER;
+		cm_get(ctx)->flags |= VC_VERIFY_PEER;
 	} else {
-		cm_get(sp)->flags &= ~VC_VERIFY_PEER;
+		cm_get(ctx)->flags &= ~VC_VERIFY_PEER;
 	}
 }
 
-void vmod_set_ssl_verify_host(struct sess *sp, int verify) {
+VCL_VOID
+vmod_set_ssl_verify_host(const struct vrt_ctx *ctx, VCL_INT verify)
+{
 	if (verify) {
-		cm_get(sp)->flags |= VC_VERIFY_HOST;
+		cm_get(ctx)->flags |= VC_VERIFY_HOST;
 	} else {
-		cm_get(sp)->flags &= ~VC_VERIFY_HOST;
+		cm_get(ctx)->flags &= ~VC_VERIFY_HOST;
 	}
 }
 
-void vmod_set_ssl_cafile(struct sess *sp, const char *path) {
-	cm_get(sp)->cafile = path;
+VCL_VOID
+vmod_set_ssl_cafile(const struct vrt_ctx *ctx, VCL_STRING path)
+{
+	cm_get(ctx)->cafile = path;
 }
 
-void vmod_set_ssl_capath(struct sess *sp, const char *path) {
-	cm_get(sp)->capath = path;
+VCL_VOID
+vmod_set_ssl_capath(const struct vrt_ctx *ctx, VCL_STRING path)
+{
+	cm_get(ctx)->capath = path;
 }
 
-void vmod_header_add(struct sess *sp, const char *value)
+VCL_VOID
+vmod_header_add(const struct vrt_ctx *ctx, VCL_STRING value)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
 
-	c = cm_get(sp);
+	c = cm_get(ctx);
 
 	rh = calloc(1, sizeof(struct req_hdr));
 	AN(rh);
@@ -403,13 +448,14 @@ void vmod_header_add(struct sess *sp, const char *value)
 	VTAILQ_INSERT_HEAD(&c->req_headers, rh, list);
 }
 
-void vmod_header_remove(struct sess *sp, const char *header)
+VCL_VOID
+vmod_header_remove(const struct vrt_ctx *ctx, VCL_STRING header)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
 	char *split, *s;
 
-	c = cm_get(sp);
+	c = cm_get(ctx);
 
 	VTAILQ_FOREACH(rh, &c->req_headers, list) {
 		s = strdup(rh->value);
@@ -425,7 +471,9 @@ void vmod_header_remove(struct sess *sp, const char *header)
 	}
 }
 
-const char *vmod_escape(struct sess *sp, const char *str) {
+VCL_STRING
+vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
+{
 	char *esc, *r;
 
 	CURL *curl_handle;
@@ -436,14 +484,16 @@ const char *vmod_escape(struct sess *sp, const char *str) {
 
 	esc = curl_easy_escape(curl_handle, str, 0);
 	AN(esc);
-	r = WS_Dup(sp->ws, esc);
+	r = WS_Dup(ctx->ws, esc);
 	curl_free(esc);
 	curl_easy_cleanup(curl_handle);
 
 	return r;
 }
 
-const char *vmod_unescape(struct sess *sp, const char *str) {
+VCL_STRING
+vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
+{
 	char *tmp, *r;
 
 	CURL *curl_handle;
@@ -454,7 +504,7 @@ const char *vmod_unescape(struct sess *sp, const char *str) {
 
 	tmp = curl_easy_unescape(curl_handle, str, 0, NULL);
 	AN(tmp);
-	r = WS_Dup(sp->ws, tmp);
+	r = WS_Dup(ctx->ws, tmp);
 	curl_free(tmp);
 	curl_easy_cleanup(curl_handle);
 

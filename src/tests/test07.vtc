@@ -15,7 +15,7 @@ varnish v1 -vcl+backend {
 		curl.header_add("foobar: bar");
 		curl.header_remove("foobar");
 		curl.get("http://${s1_addr}:${s1_port}");
-		error 200;
+		return (error(200));
 	}
 } -start
 

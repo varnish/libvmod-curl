@@ -25,7 +25,7 @@ varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
 		curl.get("http://${s1_addr}:${s1_port}");
-		error 200;
+		return (error(200));
 	}
 
 	sub vcl_error {

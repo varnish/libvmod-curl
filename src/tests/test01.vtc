@@ -13,10 +13,10 @@ varnish v1 -vcl+backend {
 	sub vcl_recv {
 	    if (req.http.func == "GET") {
 	    	    curl.get("http://${s1_addr}:${s1_port}");
-	    	    error 404;
+	    	    return (error(404));
 	    } elsif (req.http.func == "FETCH") {
 	    	    curl.fetch("http://${s1_addr}:${s1_port}");
-	    	    error 404;
+	    	    return (error(404));
 	    }
         }
 

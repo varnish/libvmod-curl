@@ -12,7 +12,7 @@ varnish v1 -vcl+backend {
 	    curl.set_timeout(1000);
 	    curl.set_connect_timeout(1000);
 	    curl.get("http://${s1_addr}:${s1_port}");
-	    error 200;
+	    return (error(200));
         }
 
 	sub vcl_error {
