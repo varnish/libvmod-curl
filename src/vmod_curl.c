@@ -9,8 +9,6 @@
 #include "bin/varnishd/cache.h"
 
 #include "vcc_if.h"
-#include "vmod_curl.h"
-
 #include "config.h"
 
 struct hdr {
@@ -50,6 +48,7 @@ static int initialised = 0;
 static struct vmod_curl **vmod_curl_list;
 int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
+static void cm_clear(struct vmod_curl *c);
 
 static void cm_init(struct vmod_curl *c) {
 	c->magic = VMOD_CURL_MAGIC;
