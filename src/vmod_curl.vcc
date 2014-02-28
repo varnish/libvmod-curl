@@ -38,3 +38,5 @@ Function STRING unescape(STRING)
 # Add / Remove request headers
 Function VOID header_add(STRING)
 Function VOID header_remove(STRING)
+
+Function VOID proxy(STRING)
