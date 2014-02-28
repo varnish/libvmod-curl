@@ -1,4 +1,4 @@
-$Module curl
+$Module curl 3
 $Init init_function
 
 # GET the URL in the first parameter
@@ -38,3 +38,5 @@ $Function STRING unescape(STRING)
 # Add / Remove request headers
 $Function VOID header_add(STRING)
 $Function VOID header_remove(STRING)
+
+$Function VOID proxy(STRING)
