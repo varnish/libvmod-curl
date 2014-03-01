@@ -13,7 +13,7 @@ libvmod_curl_la_SOURCES = \
 	vmod_curl.h
 
 vcc_if.c vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
-	@VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
+	@PYTHON@ @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
 
 VMOD_TESTS = tests/*.vtc
 .PHONY: $(VMOD_TESTS)
