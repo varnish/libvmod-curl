@@ -1,4 +1,4 @@
-varnishtest "curl: header_add"
+varnishtest "Test header_add"
 
 server s1 {
 	rxreq

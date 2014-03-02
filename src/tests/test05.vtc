@@ -1,4 +1,4 @@
-varnishtest "curl: string escape"
+varnishtest "Test string escape"
 
 server s1 {
        rxreq

@@ -1,4 +1,4 @@
-varnishtest "Test example vmod"
+varnishtest "Test objects are cleared out on get when restarting"
 
 server s1 {
        rxreq
