@@ -1,25 +1,25 @@
 varnishtest "Test objects are cleared out on get when restarting"
 
 server s1 {
-       rxreq
-       txresp -hdr "Foo: bar"
-       rxreq
-       txresp -hdr "Foo: bar"
+	rxreq
+	txresp -hdr "Foo: bar"
+	rxreq
+	txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_deliver {
-	    curl.get("http://localhost:65500");
-	    if (req.restarts < 1) {
-	       return(restart);
-	    }
-	    set resp.http.x-error = curl.error();
+		curl.get("http://localhost:65500");
+		if (req.restarts < 1) {
+			return (restart);
+		}
+		set resp.http.x-error = curl.error();
 
-	    # Fix for RHEL5 old curl lib
-	    if (resp.http.x-error == "couldn't connect to server") {
-	        set resp.http.x-error = "Couldn't connect to server";
-	    }
+		# Fix for RHEL5 old curl lib
+		if (resp.http.x-error == "couldn't connect to server") {
+			set resp.http.x-error = "Couldn't connect to server";
+		}
 	}
 } -start
 

@@ -22,6 +22,4 @@ varnish v1 -vcl+backend {
 client c1 {
 	txreq -url "/"
 	rxresp
-}
-
-client c1 -run
+} -run
