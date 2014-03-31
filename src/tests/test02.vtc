@@ -12,16 +12,16 @@ varnish v1 -vcl+backend {
 		curl.set_timeout(1000);
 		curl.set_connect_timeout(1000);
 		curl.get("http://${s1_addr}:${s1_port}");
-		return (error(200));
+		return (synth(200));
 	}
 
-	sub vcl_error {
-		set obj.http.x-status = curl.status();
-		set obj.http.x-error = curl.error();
+	sub vcl_synth {
+		set resp.http.x-status = curl.status();
+		set resp.http.x-error = curl.error();
 
 		# Fix for RHEL5 old curl lib
-		if (obj.http.x-error == "a timeout was reached") {
-			set obj.http.x-error = "Timeout was reached";
+		if (resp.http.x-error == "a timeout was reached") {
+			set resp.http.x-error = "Timeout was reached";
 		}
 	}
 } -start

@@ -25,20 +25,20 @@ varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
 		curl.get("http://${s1_addr}:${s1_port}");
-		return (error(200));
+		return (synth(200));
 	}
 
-	sub vcl_error {
-		set obj.http.x-status = curl.status();
+	sub vcl_synth {
+		set resp.http.x-status = curl.status();
 		if (curl.error()) {
-			set obj.http.x-error = curl.error();
+			set resp.http.x-error = curl.error();
 		} else {
-			set obj.http.x-error = "";
+			set resp.http.x-error = "";
 		}
 		if (curl.header("foo")) {
-			set obj.http.x-foo = curl.header("foo");
+			set resp.http.x-foo = curl.header("foo");
 		} else {
-			set obj.http.x-foo = "";
+			set resp.http.x-foo = "";
 		}
 	}
 } -start
