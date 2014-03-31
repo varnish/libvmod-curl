@@ -51,23 +51,6 @@ int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static void cm_clear(struct vmod_curl *c);
 
-/* Stolen from 3.0's cache_ws.c  */
-static char *
-WS_Dup(struct ws *ws, const char *s)
-{
-	unsigned l;
-	char *p;
-
-	WS_Assert(ws);
-	l = strlen(s) + 1;
-	p = WS_Alloc(ws, l);
-	if (p != NULL)
-		memcpy(p, s, l);
-	DSL(0x02, SLT_Debug, 0, "WS_Dup(%p, \"%s\") = %p", ws, s, p);
-	WS_Assert(ws);
-	return (p);
-}
-
 static void cm_init(struct vmod_curl *c) {
 	c->magic = VMOD_CURL_MAGIC;
 	VTAILQ_INIT(&c->headers);
@@ -488,7 +471,7 @@ vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
 
 	esc = curl_easy_escape(curl_handle, str, 0);
 	AN(esc);
-	r = WS_Dup(ctx->ws, esc);
+	r = WS_Copy(ctx->ws, esc, -1);
 	curl_free(esc);
 	curl_easy_cleanup(curl_handle);
 
@@ -508,7 +491,7 @@ vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 
 	tmp = curl_easy_unescape(curl_handle, str, 0, NULL);
 	AN(tmp);
-	r = WS_Dup(ctx->ws, tmp);
+	r = WS_Copy(ctx->ws, tmp, -1);
 	curl_free(tmp);
 	curl_easy_cleanup(curl_handle);
 
