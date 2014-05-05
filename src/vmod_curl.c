@@ -320,7 +320,7 @@ vmod_get(const struct vrt_ctx *ctx, VCL_STRING url)
 }
 
 VCL_VOID
-void vmod_head(const struct vrt_ctx *ctx, VCL_STRING url) {
+vmod_head(const struct vrt_ctx *ctx, VCL_STRING url) {
  	struct vmod_curl *c;
  	c = cm_get(ctx);
  	cm_clear_fetch_state(c);
