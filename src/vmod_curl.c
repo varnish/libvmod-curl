@@ -233,6 +233,10 @@ static void cm_perform(struct vmod_curl *c) {
 		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, c->postfields);
 
 	}
+	if (c->method && strcmp(c->method, "HEAD") == 0) {
+		curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1L);
+
+	}
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
@@ -307,6 +311,15 @@ void vmod_get(struct sess *sp, const char *url) {
 	cm_clear_fetch_state(c);
 	c->url = url;
 	c->method = "GET";
+	cm_perform(c);
+}
+
+void vmod_head(struct sess *sp, const char *url) {
+	struct vmod_curl *c;
+	c = cm_get(sp);
+	cm_clear_fetch_state(c);
+	c->url = url;
+	c->method = "HEAD";
 	cm_perform(c);
 }
 
