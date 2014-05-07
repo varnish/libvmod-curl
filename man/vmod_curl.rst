@@ -30,8 +30,8 @@ Prototype
 Return value
         VOID
 Description
-        Performs a cURL request to the given URL.  A deprecated alias
-	for this function is `get`.
+        Performs a GET request to the given URL.  A deprecated alias
+	for this function is `fetch`.
 Example
         ::
 
@@ -65,7 +65,7 @@ Prototype
 Return value
         VOID
 Description
-        Performs a cURL request to the given URL.  The second
+        Performs a POST request to the given URL.  The second
 	parameter are the POST parameters.
 Example
         ::
@@ -87,9 +87,9 @@ Description
 Example
         ::
 
-                curl.fetch("http://example.com/test");
+                curl.get("http://example.com/test");
                 if (curl.header("X-Foo") == "bar") {
-                // ...
+                    ...
                 }
                 curl.free();
 
@@ -120,9 +120,9 @@ Description
 Example
         ::
 
-                curl.fetch("http://example.com/test");
+                curl.get("http://example.com/test");
                 if (curl.status() == 404) {
-                // ...
+                    ...
                 }
                 curl.free();
 
@@ -294,6 +294,22 @@ Return value
 Description
         URL decodes the given string.
 
+proxy
+-----
+
+Prototype
+        ::
+
+                proxy(STRING)
+Return value
+        VOID
+Description
+        Set the proxy to use.
+Example
+        ::
+
+                curl.proxy("http://user:secret@some.server.dom:8080/");
+
 INSTALLATION
 ============
 
@@ -327,12 +343,11 @@ In your VCL you could then use this vmod along the following lines::
 
         sub vcl_recv {
                 if (req.http.X-Curl) {
-                        curl.fetch(req.http.X-Curl);
+                        curl.get(req.http.X-Curl);
                         if (curl.status() != 200) {
                                 return (error);
                         }
                 }
-                // ...
         }
 
 
@@ -350,4 +365,4 @@ Aspiro Music AS for usage on their WiMP music streaming service.
 This document is licensed under the same license as the
 libvmod-curl project. See LICENSE for details.
 
-* Copyright (c) 2011 Varnish Software
+* Copyright (c) 2011-2014 Varnish Software

@@ -1,48 +1,67 @@
 varnishtest "Test curl vmod"
 
 server s1 {
-       rxreq
-       expect req.request == GET
-       txresp -hdr "Foo: bar"
-       accept
-       rxreq
-       expect req.request == GET
-       txresp -hdr "Foo: bar"
-       accept
-       rxreq
-       expect req.request == HEAD
-       txresp -hdr "Foo: bar"
+	rxreq
+	expect req.request == GET
+	txresp -hdr "Foo: bar" -body "Test"
+	accept
+	rxreq
+	expect req.request == GET
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.request == HEAD
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.request == POST
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.request == GET
+	expect req.url == "http://example.com/"
+	expect req.http.proxy-authorization == "Basic dXNlcjpzZWNyZXQ="
+	txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
-	    if (req.http.func == "GET") {
-	    	    curl.get("http://${s1_addr}:${s1_port}");
-	    	    error 404;
-	    } elsif (req.http.func == "FETCH") {
-	    	    curl.fetch("http://${s1_addr}:${s1_port}");
-	    	    error 404;
-	    } elsif (req.http.func == "HEAD") {
-	    	    curl.head("http://${s1_addr}:${s1_port}");
-	    	    error 404;
-	    }
-        }
+		if (req.http.func == "GET") {
+			curl.get("http://${s1_addr}:${s1_port}");
+			error 404;
+		} elsif (req.http.func == "FETCH") {
+			curl.fetch("http://${s1_addr}:${s1_port}");
+			error 404;
+		} elsif (req.http.func == "HEAD") {
+			curl.head("http://${s1_addr}:${s1_port}");
+			error 404;
+		} elsif (req.http.func == "POST") {
+			curl.post("http://${s1_addr}:${s1_port}", "a=b");
+			error 404;
+		} elsif (req.http.func == "PROXY") {
+			curl.proxy("http://user:secret@${s1_addr}:${s1_port}");
+			curl.get("http://example.com/");
+			error 404;
+		}
+	}
 
 	sub vcl_error {
-	    set obj.status = curl.status();
-	    set obj.http.foo = curl.header("foo");
-	    set obj.http.cl = curl.header("content-length");
-        }
+		set obj.status = curl.status();
+		set obj.http.foo = curl.header("foo");
+		set obj.http.cl = curl.header("content-length");
+		set obj.http.body = curl.body();
+	}
 } -start
 
 client c1 {
 	txreq -url "/" -hdr "func: GET"
 	rxresp
 	expect resp.http.foo == "bar"
-	expect resp.http.cl == "0"
+	expect resp.http.cl == "4"
 	expect resp.status == 200
-}
+	expect resp.http.body == "Test"
+} -run
 
 client c2 {
 	txreq -url "/" -hdr "func: FETCH"
@@ -50,7 +69,8 @@ client c2 {
 	expect resp.http.foo == "bar"
 	expect resp.http.cl == "0"
 	expect resp.status == 200
-}
+	expect resp.http.body == ""
+} -run
 
 client c3 {
 	txreq -url "/" -hdr "func: HEAD"
@@ -58,8 +78,23 @@ client c3 {
 	expect resp.http.foo == "bar"
 	expect resp.http.cl == "0"
 	expect resp.status == 200
-}
+	expect resp.http.body == ""
+} -run
 
-client c1 -run
-client c2 -run
-client c3 -run
+client c4 {
+	txreq -url "/" -hdr "func: POST"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c5 {
+	txreq -url "/" -hdr "func: PROXY"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run

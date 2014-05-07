@@ -1,4 +1,4 @@
-varnishtest "curl: header_add"
+varnishtest "Test header_add"
 
 server s1 {
 	rxreq
@@ -15,9 +15,9 @@ varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
 		if (req.http.extra) {
-		   curl.header_add("extra: 1");
+			curl.header_add("extra: 1");
 		} else {
-		    curl.header_add("foo: bar");
+			curl.header_add("foo: bar");
 		}
 		curl.get("http://${s1_addr}:${s1_port}");
 		error 200;

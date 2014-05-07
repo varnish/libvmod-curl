@@ -1,29 +1,29 @@
 varnishtest "Test data timeout"
 
 server s1 {
-       rxreq
-       delay 2
-       txresp -hdr "Foo: bar"
+	rxreq
+	delay 2
+	txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 	sub vcl_recv {
-	    curl.set_timeout(1000);
-	    curl.set_connect_timeout(1000);
-	    curl.get("http://${s1_addr}:${s1_port}");
-	    error 200;
-        }
+		curl.set_timeout(1000);
+		curl.set_connect_timeout(1000);
+		curl.get("http://${s1_addr}:${s1_port}");
+		error 200;
+	}
 
 	sub vcl_error {
-	    set obj.http.x-status = curl.status();
-	    set obj.http.x-error = curl.error();
+		set obj.http.x-status = curl.status();
+		set obj.http.x-error = curl.error();
 
-	    # Fix for RHEL5 old curl lib
-	    if (obj.http.x-error == "a timeout was reached") {
-		set obj.http.x-error = "Timeout was reached";
-	    }
-        }
+		# Fix for RHEL5 old curl lib
+		if (obj.http.x-error == "a timeout was reached") {
+			set obj.http.x-error = "Timeout was reached";
+		}
+	}
 } -start
 
 client c1 {
@@ -31,6 +31,4 @@ client c1 {
 	rxresp
 	expect resp.http.x-status == 0
 	expect resp.http.x-error == "Timeout was reached"
-}
-
-client c1 -run
+} -run

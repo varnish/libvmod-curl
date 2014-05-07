@@ -1,4 +1,4 @@
-varnishtest "curl: header_remove"
+varnishtest "Test header_remove"
 
 server s1 {
 	rxreq
@@ -22,6 +22,4 @@ varnish v1 -vcl+backend {
 client c1 {
 	txreq -url "/"
 	rxresp
-}
-
-client c1 -run
+} -run
