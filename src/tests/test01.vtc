@@ -2,9 +2,15 @@ varnishtest "Test curl vmod"
 
 server s1 {
        rxreq
+       expect req.request == GET
        txresp -hdr "Foo: bar"
        accept
        rxreq
+       expect req.request == GET
+       txresp -hdr "Foo: bar"
+       accept
+       rxreq
+       expect req.request == HEAD
        txresp -hdr "Foo: bar"
 } -start
 
@@ -17,13 +23,15 @@ varnish v1 -vcl+backend {
 	    } elsif (req.http.func == "FETCH") {
 	    	    curl.fetch("http://${s1_addr}:${s1_port}");
 	    	    error 404;
+	    } elsif (req.http.func == "HEAD") {
+	    	    curl.head("http://${s1_addr}:${s1_port}");
+	    	    error 404;
 	    }
         }
 
 	sub vcl_error {
 	    set obj.status = curl.status();
 	    set obj.http.foo = curl.header("foo");
-	    set obj.http.cl = "0";
 	    set obj.http.cl = curl.header("content-length");
         }
 } -start
@@ -44,5 +52,14 @@ client c2 {
 	expect resp.status == 200
 }
 
+client c3 {
+	txreq -url "/" -hdr "func: HEAD"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+}
+
 client c1 -run
 client c2 -run
+client c3 -run
