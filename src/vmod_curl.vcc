@@ -7,6 +7,9 @@ $Function VOID get(STRING)
 # Compatibility name for get
 $Function VOID fetch(STRING)
 
+# HEAD the URL in the first parameter
+$Function VOID head(STRING)
+
 # POST the URL in the first parameter with the body fields given in
 # the second
 $Function VOID post(STRING, STRING)
