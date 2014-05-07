@@ -31,7 +31,7 @@ Return value
         VOID
 Description
         Performs a GET request to the given URL.  A deprecated alias
-	for this function is `fetch`.
+        for this function is `fetch`.
 Example
         ::
 
@@ -66,7 +66,7 @@ Return value
         VOID
 Description
         Performs a POST request to the given URL.  The second
-	parameter are the POST parameters.
+        parameter are the POST parameters.
 Example
         ::
 
@@ -309,47 +309,6 @@ Example
         ::
 
                 curl.proxy("http://user:secret@some.server.dom:8080/");
-
-INSTALLATION
-============
-
-The source tree is based on autotools to configure the building, and
-does also have the necessary bits in place to do functional unit tests
-using the varnishtest tool.
-
-Usage::
-
- ./configure VARNISHSRC=DIR [VMODDIR=DIR]
-
-`VARNISHSRC` is the directory of the Varnish source tree for which to
-compile your vmod. Both the `VARNISHSRC` and `VARNISHSRC/include`
-will be added to the include search paths for your module.
-
-Optionally you can also set the vmod install directory by adding
-`VMODDIR=DIR` (defaults to the pkg-config discovered directory from your
-Varnish installation).
-
-Make targets:
-
-* make - builds the vmod
-* make install - installs your vmod in `VMODDIR`
-* make check - runs the unit tests in ``src/tests/*.vtc``
-
-Note that some of the test cases /will/ and should fail at the time being.
-
-In your VCL you could then use this vmod along the following lines::
-        
-        import curl;
-
-        sub vcl_recv {
-                if (req.http.X-Curl) {
-                        curl.get(req.http.X-Curl);
-                        if (curl.status() != 200) {
-                                return (error);
-                        }
-                }
-        }
-
 
 BUGS
 ====
