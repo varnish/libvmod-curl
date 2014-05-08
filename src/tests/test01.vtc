@@ -10,6 +10,11 @@ server s1 {
 	txresp -hdr "Foo: bar"
 	accept
 	rxreq
+	expect req.method == HEAD
+	expect req.bodylen == 0
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
 	expect req.method == POST
 	expect req.bodylen == 3
 	txresp -hdr "Foo: bar"
@@ -29,6 +34,9 @@ varnish v1 -vcl+backend {
 			return (synth(404));
 		} elsif (req.http.func == "FETCH") {
 			curl.fetch("http://${s1_addr}:${s1_port}");
+			return (synth(404));
+		} elsif (req.http.func == "HEAD") {
+			curl.head("http://${s1_addr}:${s1_port}");
 			return (synth(404));
 		} elsif (req.http.func == "POST") {
 			curl.post("http://${s1_addr}:${s1_port}", "a=b");
@@ -67,7 +75,7 @@ client c2 {
 } -run
 
 client c3 {
-	txreq -url "/" -hdr "func: POST"
+	txreq -url "/" -hdr "func: HEAD"
 	rxresp
 	expect resp.http.foo == "bar"
 	expect resp.http.cl == "0"
@@ -76,6 +84,15 @@ client c3 {
 } -run
 
 client c4 {
+	txreq -url "/" -hdr "func: POST"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c5 {
 	txreq -url "/" -hdr "func: PROXY"
 	rxresp
 	expect resp.http.foo == "bar"

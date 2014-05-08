@@ -38,6 +38,23 @@ Example
                 curl.get("http://example.com/test");
                 curl.free();
 
+head
+----
+
+Prototype
+        ::
+
+                head(STRING)
+Return value
+        VOID
+Description
+        Performs a HEAD request to the given URL.
+Example
+        ::
+
+                curl.head("http://example.com/test");
+                curl.free();
+
 post
 ----
 
