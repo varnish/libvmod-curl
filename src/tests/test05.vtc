@@ -1,8 +1,8 @@
 varnishtest "Test string escape"
 
 server s1 {
-       rxreq
-       txresp
+	rxreq
+	txresp
 } -start
 
 varnish v1 -vcl+backend {

@@ -15,11 +15,11 @@ To use the vmod do something along the lines of:
 import curl;
 
 sub vcl_recv {
-	curl.fetch("http://example.com/test");
-	if (curl.header("X-Foo") == "bar") {
-		...
-	}
-	curl.free();
+    curl.get("http://example.com/test");
+    if (curl.header("X-Foo") == "bar") {
+        ...
+    }
+    curl.free();
 }
 
 See src/vmod_curl.vcc for the rest of the callable functions.

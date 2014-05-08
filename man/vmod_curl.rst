@@ -31,7 +31,7 @@ Return value
         VOID
 Description
         Performs a GET request to the given URL.  A deprecated alias
-	for this function is `fetch`.
+        for this function is `fetch`.
 Example
         ::
 
@@ -66,7 +66,7 @@ Return value
         VOID
 Description
         Performs a POST request to the given URL.  The second
-	parameter are the POST parameters.
+        parameter are the POST parameters.
 Example
         ::
 
@@ -89,7 +89,7 @@ Example
 
                 curl.get("http://example.com/test");
                 if (curl.header("X-Foo") == "bar") {
-			...
+                    ...
                 }
                 curl.free();
 
@@ -122,7 +122,7 @@ Example
 
                 curl.get("http://example.com/test");
                 if (curl.status() == 404) {
-			...
+                    ...
                 }
                 curl.free();
 
@@ -298,17 +298,17 @@ proxy
 -----
 
 Prototype
-	::
+        ::
 
-		proxy(STRING)
+                proxy(STRING)
 Return value
-	VOID
+        VOID
 Description
-	Set the proxy to use.
+        Set the proxy to use.
 Example
-	::
+        ::
 
-		curl.proxy("http://user:secret@some.server.dom:8080/");
+                curl.proxy("http://user:secret@some.server.dom:8080/");
 
 BUGS
 ====
