@@ -143,6 +143,9 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
 	int i;
 
+	(void)priv;
+	(void)conf;
+
 	if (initialised)
 	  return 0;
 
