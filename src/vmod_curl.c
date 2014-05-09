@@ -173,7 +173,7 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 {
 	struct vmod_curl *vc;
 	struct hdr *h;
-	char *split, *e;
+	char *split;
 	ptrdiff_t keylen, vallen;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
@@ -216,10 +216,6 @@ static void cm_perform(struct vmod_curl *c) {
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
-
-	char *p;
-	unsigned u, v;
-	struct hdr *h, *h2;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -479,7 +475,6 @@ vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
 	char *esc, *r;
 
 	CURL *curl_handle;
-	CURLcode cr;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -499,7 +494,6 @@ vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 	char *tmp, *r;
 
 	CURL *curl_handle;
-	CURLcode cr;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
