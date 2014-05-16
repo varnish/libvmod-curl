@@ -42,6 +42,8 @@ struct vmod_curl {
 	VTAILQ_HEAD(, req_hdr) req_headers;
 	const char 	*proxy;
 	struct vsb	*body;
+	/* custom_method overrides GET/HEAD/etc at request time. */
+	const char *custom_method;
 };
 
 static int initialised = 0;
@@ -112,6 +114,7 @@ static void cm_clear(struct vmod_curl *c) {
 	c->error = NULL;
 	c->xid = 0;
 	c->proxy = NULL;
+	c->custom_method = NULL;
 }
 
 static struct vmod_curl* cm_get(struct sess *sp) {
@@ -284,6 +287,8 @@ static void cm_perform(struct vmod_curl *c) {
 	if (c->capath) {
 		      curl_easy_setopt(curl_handle, CURLOPT_CAPATH, c->capath);
 	}
+
+	curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, c->custom_method);
 
 	cr = curl_easy_perform(curl_handle);
 
@@ -480,4 +485,17 @@ const char *vmod_unescape(struct sess *sp, const char *str) {
 
 void vmod_proxy(struct sess *sp, const char *proxy) {
 	cm_get(sp)->proxy = proxy;
+}
+
+void vmod_set_method(struct sess *sp, const char *m) {
+	char *tmp;
+
+	if (m && *m) {
+		char *cp = tmp = WS_Alloc(sp->ws, strlen(m)+1);
+		if(tmp) {
+			while(*m) *cp++ = toupper(*m++);
+			*cp = '\0';
+		}
+	} else tmp = NULL;
+	cm_get(sp)->custom_method = tmp;
 }

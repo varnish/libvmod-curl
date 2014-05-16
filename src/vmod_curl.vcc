@@ -43,3 +43,6 @@ Function VOID header_add(STRING)
 Function VOID header_remove(STRING)
 
 Function VOID proxy(STRING)
+
+# Set custom http method
+Function VOID set_method(STRING)
