@@ -334,11 +334,11 @@ Example
         ::
 
                 // Send an http purge command to two localhost URLs
-                set_method("PURGE");
+                curl.set_method("PURGE");
                 curl.head("http://127.0.0.1/test");
                 curl.head("http://127.0.0.1/test2")
                 // Revert to a normal GET request
-                set_method("");
+                curl.set_method("");
                 curl.get("http://127.0.0.1/test");
 
 BUGS
