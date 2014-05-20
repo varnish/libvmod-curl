@@ -2,6 +2,7 @@ This vmod provides cURL bindings for Varnish so you can use Varnish
 as an HTTP client and fetch headers and bodies from backends.
 
 Usage:
+
 ./configure VARNISHSRC=DIR [VMODDIR=DIR]
 
 VARNISHSRC is the directory of the Varnish source tree for which to

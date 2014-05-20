@@ -143,6 +143,9 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
 	int i;
 
+	(void)priv;
+	(void)conf;
+
 	if (initialised)
 	  return 0;
 
@@ -173,7 +176,7 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 {
 	struct vmod_curl *vc;
 	struct hdr *h;
-	char *split, *e;
+	char *split;
 	ptrdiff_t keylen, vallen;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
@@ -216,10 +219,6 @@ static void cm_perform(struct vmod_curl *c) {
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
-
-	char *p;
-	unsigned u, v;
-	struct hdr *h, *h2;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -446,7 +445,6 @@ const char *vmod_escape(struct sess *sp, const char *str) {
 	char *esc, *r;
 
 	CURL *curl_handle;
-	CURLcode cr;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -464,7 +462,6 @@ const char *vmod_unescape(struct sess *sp, const char *str) {
 	char *tmp, *r;
 
 	CURL *curl_handle;
-	CURLcode cr;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
