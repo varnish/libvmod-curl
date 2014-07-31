@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "vrt.h"
 #include "vsb.h"
@@ -26,6 +27,7 @@ struct vmod_curl {
 	unsigned	magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
 	unsigned vxid;
+	int 		async;
 	long		status;
 	long		timeout_ms;
 	long		connect_timeout_ms;
@@ -43,6 +45,9 @@ struct vmod_curl {
 	const char 	*proxy;
 	struct vsb	*body;
 };
+
+/* thread function */
+//void *cm_perform_sync(void*);
 
 static int initialised = 0;
 
@@ -103,6 +108,7 @@ static void cm_clear(struct vmod_curl *c) {
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
 	cm_clear_fetch_state(c);
+	c->async = 0;
 	c->status = 0;
 	c->timeout_ms = -1;
 	c->connect_timeout_ms = -1;
@@ -213,12 +219,14 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
-static void cm_perform(struct vmod_curl *c) {
-
+static void* cm_perform_sync(void *arg) {
+	struct vmod_curl *c;
 	CURL *curl_handle;
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
+
+	CAST_OBJ_NOTNULL(c, arg, VMOD_CURL_MAGIC);
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -298,6 +306,17 @@ static void cm_perform(struct vmod_curl *c) {
 	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
 	VSB_finish(c->body);
+}
+
+static void cm_perform(struct vmod_curl *c) {
+	pthread_t thread0;
+	void *arg;
+	arg = (void*) c;
+	if (c->async) {
+		pthread_create(&thread0, NULL, cm_perform_sync, arg);
+	} else {
+		cm_perform_sync(c);
+	}
 }
 
 VCL_VOID
@@ -399,6 +418,12 @@ VCL_VOID
 vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 {
 	cm_get(ctx)->connect_timeout_ms = timeout;
+}
+
+VCL_VOID
+vmod_set_asyns(const struct vrt_ctx *ctx, VCL_INT async_flag)
+{
+	cm_get(ctx)->async = async_flag;
 }
 
 VCL_VOID
