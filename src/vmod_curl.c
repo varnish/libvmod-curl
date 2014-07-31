@@ -421,7 +421,7 @@ vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 }
 
 VCL_VOID
-vmod_set_asyns(const struct vrt_ctx *ctx, VCL_INT async_flag)
+vmod_set_async(const struct vrt_ctx *ctx, VCL_INT async_flag)
 {
 	cm_get(ctx)->async = async_flag;
 }
