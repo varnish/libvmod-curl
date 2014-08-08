@@ -46,9 +46,6 @@ struct vmod_curl {
 	struct vsb	*body;
 };
 
-/* thread function */
-//void *cm_perform_sync(void*);
-
 static int initialised = 0;
 
 static struct vmod_curl **vmod_curl_list;
@@ -219,15 +216,37 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
+// free the vmod_curl structure mem allocation
+static void cm_free(void *arg) {
+    struct vmod_curl *c;
+    CAST_OBJ_NOTNULL(c, arg, VMOD_CURL_MAGIC);
+    if (c->async) {
+	free((void*)c->url);
+	free((void*)c->method);
+	free((void*)c->postfields);
+	free((void*)c->cafile);
+	free((void*)c->capath);
+	free((void*)c->proxy);
+	cm_clear_body(c);
+	cm_clear_headers(c);
+	cm_clear_req_headers(c);
+	free(arg);
+    }
+}
+
+// actual cUrl request, called either directly or as a pthread worker method
 static void* cm_perform_sync(void *arg) {
 	struct vmod_curl *c;
 	CURL *curl_handle;
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
+	
+	// thread cleanup handler
+	pthread_cleanup_push(cm_free, arg);
 
 	CAST_OBJ_NOTNULL(c, arg, VMOD_CURL_MAGIC);
-
+	
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
 
@@ -306,6 +325,56 @@ static void* cm_perform_sync(void *arg) {
 	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
 	VSB_finish(c->body);
+        // call cleanup handler 
+	pthread_cleanup_pop(1);
+}
+
+// deep clone of the vmod_curl structure instance
+static struct vmod_curl* cm_clone(struct vmod_curl *src) {
+	struct vmod_curl* target;
+	struct req_hdr *rh;
+	struct req_hdr *rh_clone;
+
+	target = malloc(sizeof(struct vmod_curl));
+	AN(target);
+	cm_init(target);
+	
+	target->async = src->async;
+	target->timeout_ms = src->timeout_ms;
+	target->connect_timeout_ms = src->connect_timeout_ms;
+	target->flags = src->flags;
+	target->vxid = src->vxid;
+
+	target->url = strdup(src->url);
+	target->method = strdup(src->method);
+
+	if (src->postfields) {
+	  target->postfields = strdup(src->postfields);
+	}
+	if (src->cafile) {
+	    target->cafile = strdup(src->cafile);
+	}
+	if (src->capath) {
+	    target->capath = strdup(src->capath);
+	}
+	if (src->proxy) {
+	    target->proxy = strdup(src->proxy);
+	}
+	if (VSB_len(src->body) > 0) {
+	    VSB_cpy(target->body, VSB_data(src->body));
+	}
+	if (!VTAILQ_EMPTY(&src->req_headers)) {
+	    VTAILQ_FOREACH(rh, &src->req_headers, list) {
+		AN(rh);
+		AN(rh->value);
+	    	rh_clone = malloc(sizeof(struct req_hdr));
+		AN(rh_clone);
+		rh_clone->value = strdup(rh->value);
+		AN(rh_clone->value);
+		VTAILQ_INSERT_HEAD(&target->req_headers, rh_clone, list);
+	    }
+	}
+	return target;
 }
 
 static void cm_perform(struct vmod_curl *c) {
@@ -313,7 +382,10 @@ static void cm_perform(struct vmod_curl *c) {
 	void *arg;
 	arg = (void*) c;
 	if (c->async) {
+		arg = (void*) cm_clone(c);
 		pthread_create(&thread0, NULL, cm_perform_sync, arg);
+		pthread_detach(thread0);
+		cm_clear_req_headers(c);
 	} else {
 		cm_perform_sync(c);
 	}
