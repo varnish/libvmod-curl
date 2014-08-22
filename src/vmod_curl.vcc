@@ -30,6 +30,9 @@ $Function STRING body()
 $Function VOID set_timeout(INT)
 $Function VOID set_connect_timeout(INT)
 
+# Set to 1 for asynchronous requests (no wait for response). 
+$Function VOID set_async(INT)
+
 $Function VOID set_ssl_verify_peer(INT)
 $Function VOID set_ssl_verify_host(INT)
 $Function VOID set_ssl_cafile(STRING)

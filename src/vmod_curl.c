@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "vrt.h"
 #include "vsb.h"
@@ -22,10 +23,14 @@ struct req_hdr {
 	VTAILQ_ENTRY(req_hdr) list;
 };
 
+
+#define VMOD_CURL_LIST_SZ_INC 215
+
 struct vmod_curl {
 	unsigned	magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
 	unsigned vxid;
+	int 		async;
 	long		status;
 	long		timeout_ms;
 	long		connect_timeout_ms;
@@ -42,6 +47,7 @@ struct vmod_curl {
 	VTAILQ_HEAD(, req_hdr) req_headers;
 	const char 	*proxy;
 	struct vsb	*body;
+	struct ws *ws; 
 };
 
 static int initialised = 0;
@@ -101,8 +107,8 @@ static void cm_clear_fetch_state(struct vmod_curl *c) {
 
 static void cm_clear(struct vmod_curl *c) {
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
-
 	cm_clear_fetch_state(c);
+	c->async = 0;
 	c->status = 0;
 	c->timeout_ms = -1;
 	c->connect_timeout_ms = -1;
@@ -112,6 +118,7 @@ static void cm_clear(struct vmod_curl *c) {
 	c->error = NULL;
 	c->vxid = 0;
 	c->proxy = NULL;
+	c->ws = NULL;
 }
 
 static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
@@ -119,7 +126,7 @@ static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
 	AZ(pthread_mutex_lock(&cl_mtx));
 
 	while (vmod_curl_list_sz <= ctx->req->sp->fd) {
-		int ns = vmod_curl_list_sz*2;
+		int ns = vmod_curl_list_sz + VMOD_CURL_LIST_SZ_INC;
 		/* resize array */
 		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
 		for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
@@ -134,6 +141,7 @@ static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
 		cm_clear(cm);
 		cm->vxid = ctx->req->sp->vxid;
 	}
+	cm->ws = ctx->ws;
 	AZ(pthread_mutex_unlock(&cl_mtx));
 	return cm;
 }
@@ -152,8 +160,8 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	initialised = 1;
 
 	vmod_curl_list = NULL;
-	vmod_curl_list_sz = 256;
-	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * 256);
+	vmod_curl_list_sz = VMOD_CURL_LIST_SZ_INC;
+	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * VMOD_CURL_LIST_SZ_INC);
 	AN(vmod_curl_list);
 	for (i = 0 ; i < vmod_curl_list_sz; i++) {
 		vmod_curl_list[i] = malloc(sizeof(struct vmod_curl));
@@ -167,8 +175,10 @@ static size_t recv_data(void *ptr, size_t size, size_t nmemb, void *s)
 	struct vmod_curl *vc;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
-
-	VSB_bcat(vc->body, ptr, size * nmemb);
+	// we don't care about the result in async calls
+	if (!vc->async) {
+	    VSB_bcat(vc->body, ptr, size * nmemb);
+	}
 	return size * nmemb;
 }
 
@@ -180,6 +190,12 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	ptrdiff_t keylen, vallen;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
+
+	// we don't care about the result in async calls
+	if (vc->async) {
+	    return (size * nmemb);
+	}
+
 
 	split = memchr(ptr, ':', size * nmemb);
 	if (split == NULL)
@@ -213,13 +229,29 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
-static void cm_perform(struct vmod_curl *c) {
+// free the vmod_curl structure mem allocation (dedicated for async calls)
+static void cm_free(void *arg) {
+    struct vmod_curl *c;
+    CAST_OBJ_NOTNULL(c, arg, VMOD_CURL_MAGIC);
+    if (c->async) {
+	//clear workspace allocation
+	if (c->ws && c->ws->s) {
+	    free(c->ws->s);
+	}
+	c->ws = NULL;
+    }
+}
 
+// actual cUrl request, called either directly or as a pthread worker method
+static void* cm_perform_sync(struct vmod_curl *c) {
 	CURL *curl_handle;
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
 	struct req_hdr *rh;
-
+	
+	// thread cleanup handler
+	pthread_cleanup_push(cm_free, (void*) c);
+	
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
 
@@ -288,16 +320,192 @@ static void cm_perform(struct vmod_curl *c) {
 
 	if (cr != 0) {
 		c->error = curl_easy_strerror(cr);
+	} else {
+	    curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c->status);
 	}
-
-	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c->status);
 
 
 	if (req_headers)
 		curl_slist_free_all(req_headers);
-	cm_clear_req_headers(c);
+	if (!c->async) {
+	    cm_clear_req_headers(c);
+	}
 	curl_easy_cleanup(curl_handle);
 	VSB_finish(c->body);
+        // call cleanup handler 
+	pthread_cleanup_pop(1);
+}
+
+// deep clone of the vmod_curl structure instance for the async call
+static struct vmod_curl* cm_clone(struct vmod_curl *src, struct ws *aws) {
+	struct vmod_curl* target;
+	struct req_hdr *rh;
+	struct req_hdr *rh_clone;
+	
+	target = WS_Alloc(aws, sizeof(struct vmod_curl));
+	if (target == NULL) {
+	    return NULL;
+	}
+	cm_init(target);
+	
+	target->ws = WS_Alloc(aws, sizeof(struct ws));
+	if (target->ws == NULL) {
+	    return NULL;
+	}	
+	memcpy(target->ws, aws, sizeof(struct ws));
+
+	target->async = src->async;
+	target->timeout_ms = src->timeout_ms;
+	target->connect_timeout_ms = src->connect_timeout_ms;
+	target->flags = src->flags;
+	target->vxid = src->vxid;
+
+	target->url = WS_Copy(target->ws, src->url, strlen(src->url) + 1);
+	if (target->url == NULL) {
+	    cm_free(target);
+	    return NULL;
+	}
+
+	target->method = WS_Copy(target->ws, src->method, strlen(src->method) + 1);
+	if (target->method == NULL) {
+	    cm_free(target);
+	    return NULL;
+	}
+
+	if (src->postfields) {
+	    target->postfields = WS_Copy(target->ws, src->postfields, strlen(src->postfields) + 1);
+	    if (target->postfields == NULL) {
+		cm_free(target);
+		return NULL;
+	    }	   
+	}
+	if (src->cafile) {
+	    target->cafile = WS_Copy(target->ws, src->cafile, strlen(src->cafile) + 1);
+	    if (target->cafile == NULL) {
+		cm_free(target);
+		return NULL;
+	    }	   
+	}
+	if (src->capath) {
+	    target->capath = WS_Copy(target->ws, src->capath, strlen(src->capath) + 1);
+	    if (target->capath == NULL) {
+		cm_free(target);
+		return NULL;
+	    }	   
+	}
+	if (src->proxy) {
+	    target->proxy = WS_Copy(target->ws, src->proxy, strlen(src->proxy) + 1);
+	    if (target->proxy == NULL) {
+		cm_free(target);
+		return NULL;
+	    }	   
+	}
+	if (VSB_len(src->body) > 0) {
+	    VSB_cpy(target->body, VSB_data(src->body));
+	}
+	if (!VTAILQ_EMPTY(&src->req_headers)) {
+	    VTAILQ_FOREACH(rh, &src->req_headers, list) {
+		AN(rh);
+		AN(rh->value);
+	    	rh_clone = (struct req_hdr*) WS_Alloc(target->ws, sizeof(struct req_hdr));
+		if (rh_clone == NULL) {
+		    cm_free(target);
+		    return NULL;
+		}
+		rh_clone->value = WS_Copy(target->ws, rh->value, strlen(rh->value) + 1);
+		if (rh_clone->value == NULL) {
+		    cm_free(target);
+		    return NULL;
+		}	   
+		VTAILQ_INSERT_HEAD(&target->req_headers, rh_clone, list);
+	    }
+	}
+	return target;
+}
+
+// the async call worker
+static void* cm_worker(struct worker* wrk, void *priv) {
+	struct vmod_curl *c;
+	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
+	AN(priv);
+	CAST_OBJ_NOTNULL(c, priv, VMOD_CURL_MAGIC);
+	AN(c);
+        cm_perform_sync(c);
+        cm_clear(c);
+	pthread_exit(0);
+}
+
+// counts the allocated size (incl. the member pointers allocation)
+static unsigned cm_size(struct vmod_curl *c) {
+	unsigned result;
+	struct req_hdr *rh;
+
+	result = sizeof(struct vmod_curl);
+	if (c->url) {
+	    result += strlen(c->url) + 1;
+	}
+	if (c->method) {
+	    result += strlen(c->method) + 1;
+	}
+	if (c->postfields) {
+	    result += strlen(c->postfields) + 1;
+	}
+	if (c->cafile) {
+	    result += strlen(c->cafile) + 1;
+	}
+	if (c->capath) {
+	    result += strlen(c->capath) + 1;
+	}
+	if (c->proxy) {
+	    result += strlen(c->proxy) + 1;
+	}
+	
+	result += sizeof(struct vsb);
+	if (c->body) {
+	    result += VSB_len(c->body) + 1;
+	}
+	if (!VTAILQ_EMPTY(&c->req_headers)) {
+	    VTAILQ_FOREACH(rh, &c->req_headers, list) {
+		if (rh) {
+		    result += sizeof(struct req_hdr);
+		    if (rh->value) {
+			result += strlen(rh->value) + 1;
+		    }
+		}
+	    }
+	}		
+	result += sizeof(struct ws);
+	return (1 + result/64) * 64;
+}
+
+static void cm_perform(struct vmod_curl *c) {
+	pthread_t thread0;
+	struct vmod_curl *c1;
+	struct ws aws;
+	unsigned alloc_size;
+	if (c->async) {
+		alloc_size = cm_size(c);
+		aws.s = malloc(alloc_size);
+		if (aws.s) {
+		    WS_Init(&aws, "bth", aws.s, alloc_size);
+		    c1 = cm_clone(c, &aws);
+		    if (c1) {
+			WRK_BgThread(&thread0, "async_thread", cm_worker, c1);
+			if (&thread0) {
+			    pthread_detach(thread0);
+			    cm_clear_req_headers(c);
+			    return;
+			}
+			// thread didn't start, so clean up the clone
+			cm_free(c1);
+		    } else {
+			// clone hasn't been created so cleanup workspace mem directly
+			free(aws.s);
+		    }
+		}
+	} 
+	c->async = 0;
+	cm_perform_sync(c);
 }
 
 VCL_VOID
@@ -399,6 +607,12 @@ VCL_VOID
 vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 {
 	cm_get(ctx)->connect_timeout_ms = timeout;
+}
+
+VCL_VOID
+vmod_set_async(const struct vrt_ctx *ctx, VCL_INT async_flag)
+{
+	cm_get(ctx)->async = async_flag;
 }
 
 VCL_VOID
@@ -514,3 +728,5 @@ VCL_VOID
 vmod_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy) {
 	cm_get(ctx)->proxy = proxy;
 }
+
+
