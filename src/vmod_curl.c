@@ -117,22 +117,24 @@ cm_clear(struct vmod_curl *c)
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
 	cm_clear_fetch_state(c);
-	c->status = 0;
-	c->timeout = -1;
+
 	c->connect_timeout = -1;
-	c->flags = 0;
+	c->timeout = -1;
 	c->cafile = NULL;
 	c->capath = NULL;
 	c->error = NULL;
-	c->vxid = 0;
-	c->proxy = NULL;
+	c->flags = 0;
 	c->method = NULL;
+	c->proxy = NULL;
+	c->status = 0;
+	c->vxid = 0;
 }
 
 static struct vmod_curl *
 cm_get(const struct vrt_ctx *ctx)
 {
 	struct vmod_curl *cm;
+
 	AZ(pthread_mutex_lock(&cl_mtx));
 
 	while (vmod_curl_list_sz <= ctx->req->sp->fd) {
