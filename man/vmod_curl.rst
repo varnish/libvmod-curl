@@ -320,10 +320,10 @@ Prototype
 Return value
         VOID
 Description
-	Set a custom string for this request.
-	This doesn't actually change how libcurl behaves or acts in
-	regards to the particular request method, it will only change
-	the actual string sent in the request.
+        Set a custom string for this request.
+        This doesn't actually change how libcurl behaves or acts in
+        regards to the particular request method, it will only change
+        the actual string sent in the request.
 Example
         ::
 
