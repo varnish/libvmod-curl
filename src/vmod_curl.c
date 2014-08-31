@@ -256,6 +256,8 @@ cm_perform(struct vmod_curl *c)
 		    c->postfields);
 	} else if (c->flags & F_METHOD_HEAD)
 		curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1L);
+	else if (c->flags & F_METHOD_GET)
+		curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1L);
 
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
