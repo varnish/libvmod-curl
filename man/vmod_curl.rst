@@ -310,6 +310,26 @@ Example
 
                 curl.proxy("http://user:secret@some.server.dom:8080/");
 
+set_method
+----------
+
+Prototype
+        ::
+
+                set_method(STRING)
+Return value
+        VOID
+Description
+	Set a custom string for this request.
+	This doesn't actually change how libcurl behaves or acts in
+	regards to the particular request method, it will only change
+	the actual string sent in the request.
+Example
+        ::
+
+                curl.set_method("PURGE");
+                curl.head("http://example.com/test");
+
 BUGS
 ====
 
