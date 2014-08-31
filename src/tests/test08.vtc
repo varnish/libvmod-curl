@@ -2,11 +2,11 @@ varnishtest "Test set_method"
 
 server s1 {
 	rxreq
-	expect req.method == "PURGE"
+	expect req.method == PURGE
 	txresp
 	accept
 	rxreq
-	expect req.method == "HEAD"
+	expect req.method == HEAD
 	txresp
 } -start
 
