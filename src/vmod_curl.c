@@ -23,28 +23,28 @@ struct req_hdr {
 };
 
 struct vmod_curl {
-	unsigned	magic;
+	unsigned magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
 	unsigned vxid;
-	long		status;
-	long		timeout_ms;
-	long		connect_timeout_ms;
-	char		flags;
+	long status;
+	long timeout_ms;
+	long connect_timeout_ms;
+	char flags;
 #define F_SSL_VERIFY_PEER	(1 << 0)
 #define F_SSL_VERIFY_HOST	(1 << 1)
 #define F_METHOD_GET		(1 << 2)
 #define F_METHOD_HEAD		(1 << 3)
 #define F_METHOD_POST		(1 << 4)
-	const char	*url;
-	char		*method;
-	const char	*postfields;
-	const char	*error;
-	const char	*cafile;
-	const char	*capath;
+	const char *url;
+	char *method;
+	const char *postfields;
+	const char *error;
+	const char *cafile;
+	const char *capath;
 	VTAILQ_HEAD(, hdr) headers;
 	VTAILQ_HEAD(, req_hdr) req_headers;
-	const char 	*proxy;
-	struct vsb	*body;
+	const char *proxy;
+	struct vsb *body;
 };
 
 static int initialised = 0;
@@ -54,7 +54,9 @@ int vmod_curl_list_sz;
 static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static void cm_clear(struct vmod_curl *c);
 
-static void cm_init(struct vmod_curl *c) {
+static void
+cm_init(struct vmod_curl *c)
+{
 	c->magic = VMOD_CURL_MAGIC;
 	VTAILQ_INIT(&c->headers);
 	VTAILQ_INIT(&c->req_headers);
@@ -62,14 +64,17 @@ static void cm_init(struct vmod_curl *c) {
 	cm_clear(c);
 }
 
-static void cm_clear_body(struct vmod_curl *c) {
-
+static void
+cm_clear_body(struct vmod_curl *c)
+{
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
 	VSB_clear(c->body);
 }
 
-static void cm_clear_headers(struct vmod_curl *c) {
+static void
+cm_clear_headers(struct vmod_curl *c)
+{
 	struct hdr *h, *h2;
 
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
@@ -82,7 +87,9 @@ static void cm_clear_headers(struct vmod_curl *c) {
 	}
 }
 
-static void cm_clear_req_headers(struct vmod_curl *c) {
+static void
+cm_clear_req_headers(struct vmod_curl *c)
+{
 	struct req_hdr *rh, *rh2;
 
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
@@ -94,15 +101,19 @@ static void cm_clear_req_headers(struct vmod_curl *c) {
 	}
 }
 
-static void cm_clear_fetch_state(struct vmod_curl *c) {
+static void
+cm_clear_fetch_state(struct vmod_curl *c)
+{
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
-	c->flags &= ~(F_METHOD_GET|F_METHOD_HEAD|F_METHOD_POST);
+	c->flags &= ~(F_METHOD_GET | F_METHOD_HEAD | F_METHOD_POST);
 	cm_clear_body(c);
 	cm_clear_headers(c);
 }
 
-static void cm_clear(struct vmod_curl *c) {
+static void
+cm_clear(struct vmod_curl *c)
+{
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
 	cm_clear_fetch_state(c);
@@ -120,16 +131,20 @@ static void cm_clear(struct vmod_curl *c) {
 	c->method = NULL;
 }
 
-static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
+static struct vmod_curl *
+cm_get(const struct vrt_ctx *ctx)
+{
 	struct vmod_curl *cm;
 	AZ(pthread_mutex_lock(&cl_mtx));
 
 	while (vmod_curl_list_sz <= ctx->req->sp->fd) {
-		int ns = vmod_curl_list_sz*2;
+		int ns = vmod_curl_list_sz * 2;
 		/* resize array */
-		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
+		vmod_curl_list =
+		    realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
 		for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
-			vmod_curl_list[vmod_curl_list_sz] = malloc(sizeof(struct vmod_curl));
+			vmod_curl_list[vmod_curl_list_sz] =
+			    malloc(sizeof(struct vmod_curl));
 			cm_init(vmod_curl_list[vmod_curl_list_sz]);
 		}
 		assert(vmod_curl_list_sz == ns);
@@ -141,7 +156,7 @@ static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
 		cm->vxid = ctx->req->sp->vxid;
 	}
 	AZ(pthread_mutex_unlock(&cl_mtx));
-	return cm;
+	return (cm);
 }
 
 int
@@ -153,7 +168,7 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	(void)conf;
 
 	if (initialised)
-	  return 0;
+		return (0);
 
 	initialised = 1;
 
@@ -161,24 +176,26 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	vmod_curl_list_sz = 256;
 	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * 256);
 	AN(vmod_curl_list);
-	for (i = 0 ; i < vmod_curl_list_sz; i++) {
+	for (i = 0; i < vmod_curl_list_sz; i++) {
 		vmod_curl_list[i] = malloc(sizeof(struct vmod_curl));
 		cm_init(vmod_curl_list[i]);
 	}
 	return (curl_global_init(CURL_GLOBAL_ALL));
 }
 
-static size_t recv_data(void *ptr, size_t size, size_t nmemb, void *s)
+static size_t
+recv_data(void *ptr, size_t size, size_t nmemb, void *s)
 {
 	struct vmod_curl *vc;
 
 	CAST_OBJ_NOTNULL(vc, s, VMOD_CURL_MAGIC);
 
 	VSB_bcat(vc->body, ptr, size * nmemb);
-	return size * nmemb;
+	return (size * nmemb);
 }
 
-static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
+static size_t
+recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 {
 	struct vmod_curl *vc;
 	struct hdr *h;
@@ -201,7 +218,7 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	h->key = strndup(ptr, keylen);
 	AN(h->key);
 
-	vallen = size*nmemb - keylen;
+	vallen = size * nmemb - keylen;
 	assert(vallen > 0);	/* Counts ':' so always larger than 0 */
 	split++;		/* Drop ':' */
 	vallen--;
@@ -219,8 +236,9 @@ static size_t recv_hdrs(void *ptr, size_t size, size_t nmemb, void *s)
 	return (size * nmemb);
 }
 
-static void cm_perform(struct vmod_curl *c) {
-
+static void
+cm_perform(struct vmod_curl *c)
+{
 	CURL *curl_handle;
 	CURLcode cr;
 	struct curl_slist *req_headers = NULL;
@@ -229,74 +247,74 @@ static void cm_perform(struct vmod_curl *c) {
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
 
-	VTAILQ_FOREACH(rh, &c->req_headers, list) {
+	VTAILQ_FOREACH(rh, &c->req_headers, list)
 		req_headers = curl_slist_append(req_headers, rh->value);
-	}
 
 	if (c->flags & F_METHOD_POST) {
 		curl_easy_setopt(curl_handle, CURLOPT_POST, 1L);
-		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, c->postfields);
+		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS,
+		    c->postfields);
 	} else if (c->flags & F_METHOD_HEAD)
 		curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1L);
 
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
+
 	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
-	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL , 1L);
+	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, recv_data);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, c);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, recv_hdrs);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, c);
-	if(c->proxy) {
+
+	if (c->proxy)
 		curl_easy_setopt(curl_handle, CURLOPT_PROXY, c->proxy);
-	}
+
 	if (c->timeout_ms > 0) {
 #ifdef CURL_TIMEOUTMS_WORKS
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS, c->timeout_ms);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS,
+		    c->timeout_ms);
 #else
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, c->timeout_ms / 1000);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT,
+		    c->timeout_ms / 1000);
 #endif
 	}
 
 	if (c->connect_timeout_ms > 0) {
 #ifdef CURL_TIMEOUTMS_WORKS
-		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, c->connect_timeout_ms);
+		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS,
+		    c->connect_timeout_ms);
 #else
-		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, c->connect_timeout_ms / 1000);
+		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT,
+		    c->connect_timeout_ms / 1000);
 #endif
 	}
 
-	if (c->flags & F_SSL_VERIFY_PEER) {
+	if (c->flags & F_SSL_VERIFY_PEER)
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
-	} else {
+	else
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
-	}
 
-	if (c->flags & F_SSL_VERIFY_HOST) {
+	if (c->flags & F_SSL_VERIFY_HOST)
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 1L);
-	} else {
+	else
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
-	}
 
-	if (c->cafile) {
-		      curl_easy_setopt(curl_handle, CURLOPT_CAINFO, c->cafile);
-	}
+	if (c->cafile)
+		curl_easy_setopt(curl_handle, CURLOPT_CAINFO, c->cafile);
 
-	if (c->capath) {
-		      curl_easy_setopt(curl_handle, CURLOPT_CAPATH, c->capath);
-	}
+	if (c->capath)
+		curl_easy_setopt(curl_handle, CURLOPT_CAPATH, c->capath);
 
 	curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, c->method);
 
 	cr = curl_easy_perform(curl_handle);
 
-	if (cr != 0) {
+	if (cr != 0)
 		c->error = curl_easy_strerror(cr);
-	}
 
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &c->status);
-
 
 	if (req_headers)
 		curl_slist_free_all(req_headers);
@@ -354,9 +372,7 @@ vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields)
 VCL_INT
 vmod_status(const struct vrt_ctx *ctx)
 {
-	int r;
-	r = cm_get(ctx)->status;
-	return r;
+	return (cm_get(ctx)->status);
 }
 
 VCL_VOID
@@ -372,8 +388,8 @@ vmod_error(const struct vrt_ctx *ctx)
 
 	c = cm_get(ctx);
 	if (c->status != 0)
-		return(NULL);
-	return(c->error);
+		return (NULL);
+	return (c->error);
 }
 
 VCL_STRING
@@ -391,13 +407,13 @@ vmod_header(const struct vrt_ctx *ctx, VCL_STRING header)
 			break;
 		}
 	}
-	return r;
+	return (r);
 }
 
 VCL_STRING
 vmod_body(const struct vrt_ctx *ctx)
 {
-	return VSB_data(cm_get(ctx)->body);
+	return (VSB_data(cm_get(ctx)->body));
 }
 
 VCL_VOID
@@ -415,21 +431,19 @@ vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 VCL_VOID
 vmod_set_ssl_verify_peer(const struct vrt_ctx *ctx, VCL_INT verify)
 {
-	if (verify) {
+	if (verify)
 		cm_get(ctx)->flags |= F_SSL_VERIFY_PEER;
-	} else {
+	else
 		cm_get(ctx)->flags &= ~F_SSL_VERIFY_PEER;
-	}
 }
 
 VCL_VOID
 vmod_set_ssl_verify_host(const struct vrt_ctx *ctx, VCL_INT verify)
 {
-	if (verify) {
+	if (verify)
 		cm_get(ctx)->flags |= F_SSL_VERIFY_HOST;
-	} else {
+	else
 		cm_get(ctx)->flags &= ~F_SSL_VERIFY_HOST;
-	}
 }
 
 VCL_VOID
@@ -486,9 +500,8 @@ vmod_header_remove(const struct vrt_ctx *ctx, VCL_STRING header)
 VCL_STRING
 vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
 {
-	char *esc, *r;
-
 	CURL *curl_handle;
+	char *esc, *r;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -499,15 +512,14 @@ vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
 	curl_free(esc);
 	curl_easy_cleanup(curl_handle);
 
-	return r;
+	return (r);
 }
 
 VCL_STRING
 vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 {
-	char *tmp, *r;
-
 	CURL *curl_handle;
+	char *tmp, *r;
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
@@ -518,7 +530,7 @@ vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 	curl_free(tmp);
 	curl_easy_cleanup(curl_handle);
 
-	return r;
+	return (r);
 }
 
 VCL_VOID
