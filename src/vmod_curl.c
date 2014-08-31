@@ -36,7 +36,7 @@ struct vmod_curl {
 #define F_METHOD_HEAD		(1 << 3)
 #define F_METHOD_POST		(1 << 4)
 	const char *url;
-	char *method;
+	const char *method;
 	const char *postfields;
 	const char *error;
 	const char *cafile;
@@ -126,8 +126,6 @@ cm_clear(struct vmod_curl *c)
 	c->error = NULL;
 	c->vxid = 0;
 	c->proxy = NULL;
-	if (c->method)
-		free(c->method);
 	c->method = NULL;
 }
 
@@ -321,10 +319,7 @@ cm_perform(struct vmod_curl *c)
 	if (req_headers)
 		curl_slist_free_all(req_headers);
 
-	if (c->method) {
-		free(c->method);
-		c->method = NULL;
-	}
+	c->method = NULL;
 
 	cm_clear_req_headers(c);
 	curl_easy_cleanup(curl_handle);
@@ -550,10 +545,5 @@ vmod_set_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy)
 VCL_VOID
 vmod_set_method(const struct vrt_ctx *ctx, VCL_STRING name)
 {
-	struct vmod_curl *c;
-
-	c = cm_get(ctx);
-	if (c->method)
-		free(c->method);
-	c->method = strdup(name);
+	cm_get(ctx)->method = name;
 }
