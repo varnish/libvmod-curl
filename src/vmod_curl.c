@@ -27,8 +27,8 @@ struct vmod_curl {
 #define VMOD_CURL_MAGIC 0xBBB0C87C
 	unsigned vxid;
 	long status;
-	long timeout_ms;
-	long connect_timeout_ms;
+	long timeout;
+	long connect_timeout;
 	char flags;
 #define F_SSL_VERIFY_PEER	(1 << 0)
 #define F_SSL_VERIFY_HOST	(1 << 1)
@@ -118,8 +118,8 @@ cm_clear(struct vmod_curl *c)
 
 	cm_clear_fetch_state(c);
 	c->status = 0;
-	c->timeout_ms = -1;
-	c->connect_timeout_ms = -1;
+	c->timeout = -1;
+	c->connect_timeout = -1;
 	c->flags = 0;
 	c->cafile = NULL;
 	c->capath = NULL;
@@ -271,23 +271,23 @@ cm_perform(struct vmod_curl *c)
 	if (c->proxy)
 		curl_easy_setopt(curl_handle, CURLOPT_PROXY, c->proxy);
 
-	if (c->timeout_ms > 0) {
+	if (c->timeout > 0) {
 #ifdef CURL_TIMEOUTMS_WORKS
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS,
-		    c->timeout_ms);
+		    c->timeout);
 #else
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT,
-		    c->timeout_ms / 1000);
+		    c->timeout / 1000);
 #endif
 	}
 
-	if (c->connect_timeout_ms > 0) {
+	if (c->connect_timeout > 0) {
 #ifdef CURL_TIMEOUTMS_WORKS
 		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS,
-		    c->connect_timeout_ms);
+		    c->connect_timeout);
 #else
 		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT,
-		    c->connect_timeout_ms / 1000);
+		    c->connect_timeout / 1000);
 #endif
 	}
 
@@ -419,13 +419,13 @@ vmod_body(const struct vrt_ctx *ctx)
 VCL_VOID
 vmod_set_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 {
-	cm_get(ctx)->timeout_ms = timeout;
+	cm_get(ctx)->timeout = timeout;
 }
 
 VCL_VOID
 vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
 {
-	cm_get(ctx)->connect_timeout_ms = timeout;
+	cm_get(ctx)->connect_timeout = timeout;
 }
 
 VCL_VOID
