@@ -294,21 +294,21 @@ Return value
 Description
         URL decodes the given string.
 
-proxy
------
+set_proxy
+---------
 
 Prototype
         ::
 
-                proxy(STRING)
+                set_proxy(STRING)
 Return value
         VOID
 Description
-        Set the proxy to use.
+        Set the proxy to use.  A deprecated alias for this function is `proxy`.
 Example
         ::
 
-                curl.proxy("http://user:secret@some.server.dom:8080/");
+                curl.set_proxy("http://user:secret@some.server.dom:8080/");
 
 set_method
 ----------

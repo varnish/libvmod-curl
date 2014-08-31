@@ -24,6 +24,12 @@ server s1 {
 	expect req.url == "http://example.com/"
 	expect req.http.proxy-authorization ~ "Basic"
 	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.method == GET
+	expect req.url == "http://example.com/"
+	expect req.http.proxy-authorization ~ "Basic"
+	txresp -hdr "Foo: bar"
 } -start
 
 varnish v1 -vcl+backend {
@@ -40,6 +46,10 @@ varnish v1 -vcl+backend {
 			return (synth(404));
 		} elsif (req.http.func == "POST") {
 			curl.post("http://${s1_addr}:${s1_port}", "a=b");
+			return (synth(404));
+		} elsif (req.http.func == "SET_PROXY") {
+			curl.set_proxy("http://user:secret@${s1_addr}:${s1_port}");
+			curl.get("http://example.com/");
 			return (synth(404));
 		} elsif (req.http.func == "PROXY") {
 			curl.proxy("http://user:secret@${s1_addr}:${s1_port}");
@@ -93,6 +103,15 @@ client c4 {
 } -run
 
 client c5 {
+	txreq -url "/" -hdr "func: SET_PROXY"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c6 {
 	txreq -url "/" -hdr "func: PROXY"
 	rxresp
 	expect resp.http.foo == "bar"

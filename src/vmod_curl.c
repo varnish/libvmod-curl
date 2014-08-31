@@ -522,7 +522,14 @@ vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 }
 
 VCL_VOID
-vmod_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy) {
+vmod_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy)
+{
+	vmod_set_proxy(ctx, proxy);
+}
+
+VCL_VOID
+vmod_set_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy)
+{
 	cm_get(ctx)->proxy = proxy;
 }
 
