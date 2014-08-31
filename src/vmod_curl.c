@@ -30,8 +30,11 @@ struct vmod_curl {
 	long		timeout_ms;
 	long		connect_timeout_ms;
 	char		flags;
-#define VC_VERIFY_PEER (1 << 0)
-#define VC_VERIFY_HOST (1 << 1)
+#define F_SSL_VERIFY_PEER	(1 << 0)
+#define F_SSL_VERIFY_HOST	(1 << 1)
+#define F_METHOD_GET		(1 << 2)
+#define F_METHOD_HEAD		(1 << 3)
+#define F_METHOD_POST		(1 << 4)
 	const char	*url;
 	const char	*method;
 	const char	*postfields;
@@ -94,7 +97,7 @@ static void cm_clear_req_headers(struct vmod_curl *c) {
 static void cm_clear_fetch_state(struct vmod_curl *c) {
 	CHECK_OBJ_NOTNULL(c, VMOD_CURL_MAGIC);
 
-	c->method = NULL;
+	c->flags &= ~(F_METHOD_GET|F_METHOD_HEAD|F_METHOD_POST);
 	cm_clear_body(c);
 	cm_clear_headers(c);
 }
@@ -227,15 +230,12 @@ static void cm_perform(struct vmod_curl *c) {
 		req_headers = curl_slist_append(req_headers, rh->value);
 	}
 
-	if (c->method && strcmp(c->method, "POST") == 0) {
+	if (c->flags & F_METHOD_POST) {
 		curl_easy_setopt(curl_handle, CURLOPT_POST, 1L);
 		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, c->postfields);
-
-	}
-	if (c->method && strcmp(c->method, "HEAD") == 0) {
+	} else if (c->flags & F_METHOD_HEAD)
 		curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 1L);
 
-	}
 	if (req_headers)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
@@ -264,13 +264,13 @@ static void cm_perform(struct vmod_curl *c) {
 #endif
 	}
 
-	if (c->flags & VC_VERIFY_PEER) {
+	if (c->flags & F_SSL_VERIFY_PEER) {
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
 	} else {
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
 	}
 
-	if (c->flags & VC_VERIFY_HOST) {
+	if (c->flags & F_SSL_VERIFY_HOST) {
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 1L);
 	} else {
 		curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
@@ -313,7 +313,7 @@ vmod_get(const struct vrt_ctx *ctx, VCL_STRING url)
 	c = cm_get(ctx);
 	cm_clear_fetch_state(c);
 	c->url = url;
-	c->method = "GET";
+	c->flags |= F_METHOD_GET;
 	cm_perform(c);
 }
 
@@ -324,7 +324,7 @@ vmod_head(const struct vrt_ctx *ctx, VCL_STRING url)
 	c = cm_get(ctx);
 	cm_clear_fetch_state(c);
 	c->url = url;
-	c->method = "HEAD";
+	c->flags |= F_METHOD_HEAD;
 	cm_perform(c);
 }
 
@@ -335,7 +335,7 @@ vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields)
 	c = cm_get(ctx);
 	cm_clear_fetch_state(c);
 	c->url = url;
-	c->method = "POST";
+	c->flags |= F_METHOD_POST;
 	c->postfields = postfields;
 	cm_perform(c);
 }
@@ -405,9 +405,9 @@ VCL_VOID
 vmod_set_ssl_verify_peer(const struct vrt_ctx *ctx, VCL_INT verify)
 {
 	if (verify) {
-		cm_get(ctx)->flags |= VC_VERIFY_PEER;
+		cm_get(ctx)->flags |= F_SSL_VERIFY_PEER;
 	} else {
-		cm_get(ctx)->flags &= ~VC_VERIFY_PEER;
+		cm_get(ctx)->flags &= ~F_SSL_VERIFY_PEER;
 	}
 }
 
@@ -415,9 +415,9 @@ VCL_VOID
 vmod_set_ssl_verify_host(const struct vrt_ctx *ctx, VCL_INT verify)
 {
 	if (verify) {
-		cm_get(ctx)->flags |= VC_VERIFY_HOST;
+		cm_get(ctx)->flags |= F_SSL_VERIFY_HOST;
 	} else {
-		cm_get(ctx)->flags &= ~VC_VERIFY_HOST;
+		cm_get(ctx)->flags &= ~F_SSL_VERIFY_HOST;
 	}
 }
 
