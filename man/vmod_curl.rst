@@ -310,6 +310,37 @@ Example
 
                 curl.proxy("http://user:secret@some.server.dom:8080/");
 
+set_method
+----------
+
+Prototype
+        ::
+
+                set_method(STRING)
+Return value
+        VOID
+Description
+        Assign a custom protocol-specific method to be used on the next
+        curl operation. **This does not alter the actual operation in any way**,
+        only the method call that is used in the operation (`GET`, `HEAD`,
+        `POST`, etc). This means that calling ``curl.head(...)`` after
+        ``curl.set_method("FOO")`` will always act like an HTTP HEAD request
+        (which never expects a response body) even though the first line
+        of the request will actually appear something like `FOO /path HTTP/1.1`
+
+        Set to ``""`` to stop using the custom method.
+
+Example
+        ::
+
+                // Send an http purge command to two localhost URLs
+                curl.set_method("PURGE");
+                curl.head("http://127.0.0.1/test");
+                curl.head("http://127.0.0.1/test2")
+                // Revert to a normal GET request
+                curl.set_method("");
+                curl.get("http://127.0.0.1/test");
+
 BUGS
 ====
 
