@@ -1,7 +1,7 @@
 Summary: CURL support for Varnish VCL
 Name: vmod-curl
 Version: 0.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-curl.tar.gz
