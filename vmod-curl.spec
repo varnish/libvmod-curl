@@ -1,7 +1,7 @@
-Summary: CURL support for Varnish VCL
+Summary: CURL support for Varnish %{VARNISHVER}
 Name: vmod-curl
-Version: 0.3
-Release: 2%{?dist}
+Version: 0.4
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-curl.tar.gz
@@ -10,7 +10,7 @@ Requires: varnish > 3.0
 BuildRequires: make, python-docutils, curl-devel > 7.19.0
 
 %description
-CURL support for Varnish VCL
+CURL support for Varnish VCL.
 
 %prep
 %setup -n libvmod-curl

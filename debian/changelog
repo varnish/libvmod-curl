@@ -1,3 +1,9 @@
+libvmod-curl (0.4) unstable; urgency=medium
+
+  * Packaging bump.
+
+ -- Lasse Karstensen <lkarsten@varnish-software.com>  Mon, 15 Sep 2014 14:22:06 +0200
+
 libvmod-curl (0.3) unstable; urgency=low
 
   * Release 0.3.
