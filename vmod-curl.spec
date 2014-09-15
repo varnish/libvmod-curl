@@ -1,6 +1,6 @@
 Summary: CURL support for Varnish %{VARNISHVER}
 Name: vmod-curl
-Version: 0.4
+Version: 0.5
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
