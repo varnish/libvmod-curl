@@ -44,6 +44,8 @@ struct vmod_curl {
 	struct vsb	*body;
 };
 
+#define VMOD_CURL_LIST_SZ_INC 256
+
 static int initialised = 0;
 
 static struct vmod_curl **vmod_curl_list;
@@ -119,7 +121,7 @@ static struct vmod_curl* cm_get(const struct vrt_ctx *ctx) {
 	AZ(pthread_mutex_lock(&cl_mtx));
 
 	while (vmod_curl_list_sz <= ctx->req->sp->fd) {
-		int ns = vmod_curl_list_sz*2;
+		int ns = vmod_curl_list_sz + VMOD_CURL_LIST_SZ_INC;
 		/* resize array */
 		vmod_curl_list = realloc(vmod_curl_list, ns * sizeof(struct vmod_curl *));
 		for (; vmod_curl_list_sz < ns; vmod_curl_list_sz++) {
@@ -152,8 +154,8 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 	initialised = 1;
 
 	vmod_curl_list = NULL;
-	vmod_curl_list_sz = 256;
-	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * 256);
+	vmod_curl_list_sz = VMOD_CURL_LIST_SZ_INC;
+	vmod_curl_list = malloc(sizeof(struct vmod_curl *) * vmod_curl_list_sz);
 	AN(vmod_curl_list);
 	for (i = 0 ; i < vmod_curl_list_sz; i++) {
 		vmod_curl_list[i] = malloc(sizeof(struct vmod_curl));
