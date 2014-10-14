@@ -2,47 +2,49 @@ $Module curl 3
 $Init init_function
 
 # GET the URL in the first parameter
-$Function VOID get(STRING)
+$Function VOID get(PRIV_VCL,STRING)
 
 # HEAD the URL in the first parameter
-$Function VOID head(STRING)
+$Function VOID head(PRIV_VCL,STRING)
 
 # Compatibility name for get
-$Function VOID fetch(STRING)
+$Function VOID fetch(PRIV_VCL,STRING)
 
 # POST the URL in the first parameter with the body fields given in
 # the second
-$Function VOID post(STRING, STRING)
+$Function VOID post(PRIV_VCL,STRING, STRING)
 
 # Return the header named in the first argument
-$Function STRING header(STRING)
+$Function STRING header(PRIV_VCL,STRING)
 
 # Free the memory used by headers. Not needed, will be handled
 # automatically if it's not called.
-$Function VOID free()
+$Function VOID free(PRIV_VCL)
 
 # The HTTP status code
-$Function INT status()
+$Function INT status(PRIV_VCL)
 
-$Function STRING error()
-$Function STRING body()
+$Function STRING error(PRIV_VCL)
+$Function STRING body(PRIV_VCL)
 
-$Function VOID set_timeout(INT)
-$Function VOID set_connect_timeout(INT)
+$Function VOID set_timeout(PRIV_VCL,INT)
+$Function VOID set_connect_timeout(PRIV_VCL,INT)
 
-$Function VOID set_ssl_verify_peer(INT)
-$Function VOID set_ssl_verify_host(INT)
-$Function VOID set_ssl_cafile(STRING)
-$Function VOID set_ssl_capath(STRING)
+$Function VOID set_ssl_verify_peer(PRIV_VCL,INT)
+$Function VOID set_ssl_verify_host(PRIV_VCL,INT)
+$Function VOID set_ssl_cafile(PRIV_VCL,STRING)
+$Function VOID set_ssl_capath(PRIV_VCL,STRING)
 
-$Function STRING escape(STRING)
-$Function STRING unescape(STRING)
+$Function STRING escape(PRIV_VCL,STRING)
+$Function STRING unescape(PRIV_VCL,STRING)
 
 # Add / Remove request headers
-$Function VOID header_add(STRING)
-$Function VOID header_remove(STRING)
+$Function VOID header_add(PRIV_VCL,STRING)
+$Function VOID header_remove(PRIV_VCL,STRING)
 
-$Function VOID proxy(STRING)
+$Function VOID proxy(PRIV_VCL,STRING)
 
-$Function VOID set_proxy(STRING)
-$Function VOID set_method(STRING)
+$Function VOID set_proxy(PRIV_VCL,STRING)
+$Function VOID set_method(PRIV_VCL,STRING)
+
+$Function VOID set_curl_handle_max_usage_count(INT)
