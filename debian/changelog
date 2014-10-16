@@ -1,3 +1,9 @@
+libvmod-curl (0.6~b1) unstable; urgency=low
+
+  * Optimization of libcurl usage (not releasing curl_handle at every request)
+
+ -- Stéphane PIEL <stephane.piel@softeam.fr>  Wed, 15 Oct 2014 16:00:00 +0200
+
 libvmod-curl (0.1) unstable; urgency=low
 
   * First version
