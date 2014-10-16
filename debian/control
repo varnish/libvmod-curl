@@ -2,11 +2,11 @@ Source: libvmod-curl
 Section: web
 Priority: extra
 Maintainer: Lasse Karstensen <lkarsten@varnish-software.com>
-Build-Depends: debhelper (>= 7), build-essential, python-docutils, libcurl4-gnutls-dev
+Build-Depends: debhelper (>= 7), build-essential, python-docutils, libcurl4-gnutls-dev, dh-autoreconf, libvarnishapi-dev (>= 4.0.0)
 Standards-Version: 3.8.1
 Vcs-Git: git://github.com/varnish/libvmod-curl.git
 
-Package: libvmod-curl
+Package: libvmod-curl-varnish4
 Architecture: any
-Depends: varnish, ${misc:Depends}
+Depends: varnish (>= 4.0.0), ${shlibs:Depends}, ${misc:Depends}
 Description: CURL for Varnish VCL
