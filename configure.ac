@@ -32,6 +32,7 @@ AM_CONDITIONAL(HAVE_RST2MAN, [test "x$RST2MAN" != "xno"])
 # Check for pkg-config
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([CURL], [libcurl])
+PKG_CHECK_MODULES([UV], [libuv])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -54,6 +55,8 @@ AC_PATH_PROG([VARNISHD], [varnishd])
 # check if curl supports ms timeout settings
 save_CFLAGS="${CFLAGS}"
 save_LIBS="${LIBS}"
+CURL_CFLAGS="${CURL_CFLAGS} ${UV_CFLAGS}"
+CURL_LIBS="${CURL_LIBS} ${UV_LIBS}"
 CFLAGS="${CFLAGS} ${CURL_CFLAGS}"
 LIBS="${LIBS} ${CURL_LIBS}"
 AC_CACHE_CHECK([for curl ms timeout settings],
