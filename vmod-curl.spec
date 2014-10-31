@@ -6,8 +6,12 @@ License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-curl.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish >= 4.0
-BuildRequires: make, python-docutils, curl-devel > 7.19.0
+Requires: varnish >= 4.0.2
+BuildRequires: make
+BuildRequires: python-docutils
+BuildRequires: varnish >= 4.0.2
+BuildRequires: varnish-libs-devel >= 4.0.2
+BuildRequires: curl-devel > 7.19.0
 
 %description
 CURL support for Varnish VCL
