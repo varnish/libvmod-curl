@@ -17,7 +17,7 @@ BuildRequires: curl-devel > 7.19.0
 CURL support for Varnish VCL
 
 %prep
-%setup -n libvmod-curl
+%setup -n libvmod-curl-trunk
 
 %build
 ./configure --prefix=/usr/ --docdir='${datarootdir}/doc/%{name}'
