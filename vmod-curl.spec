@@ -33,7 +33,7 @@ rm -rf %{buildroot}
 %{_mandir}/man?/*
 
 %changelog
-* Tue Nov 14 2012 Lasse Karstensen <lasse@varnish-software.com> - 0.1-0.20121114
-- Initial version.
 * Thu Nov 13 2014 Waldek Kozba <100assc@gmail.com> - 0.2-0.20141113
 - Added dependencies for libuv.
+* Tue Nov 14 2012 Lasse Karstensen <lasse@varnish-software.com> - 0.1-0.20121114
+- Initial version.
