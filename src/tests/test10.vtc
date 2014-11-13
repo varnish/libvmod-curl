@@ -1,0 +1,57 @@
+varnishtest "Test 'fire & forget'"
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+server s2 {
+	# the cURL request
+	rxreq
+	# simulate long running task
+	delay 1.1
+	expect req.method == "POST"
+	expect req.url == "/curl"
+	expect req.http.Content-Type == "text/plain"
+	expect req.bodylen == 9
+	txresp
+} -start
+
+varnish v1 -vcl {
+	import std;
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+	backend default {
+		.host = "${s1_addr}";
+		.port = "${s1_port}";
+	}
+
+	sub vcl_deliver {
+		std.timestamp("some_operation");
+		curl.set_no_wait(1);
+		curl.header_add("Content-Type: text/plain");
+		curl.post("http://${s2_addr}:${s2_port}/curl", "TEST_BODY");
+		# status is always "0" in no wait mode
+		set resp.http.x-status = curl.status();
+		curl.free();
+		std.timestamp("curl_call_finished");
+	}
+
+} -start
+
+logexpect l1 -v v1 -g request {
+	# both should appear in < 1 sec.
+	expect	* 1001	Timestamp	{some_operation: \S+ 0\.\d+ 0\.\d+}
+	expect	* = 	Timestamp	{curl_call_finished: \S+ 0\.\d+ 0\.\d+}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-status == 0
+} -run
+
+logexpect l1 -wait
+
+server s2 -wait

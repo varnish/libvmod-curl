@@ -1,0 +1,58 @@
+varnishtest "Test asynchronous capability"
+
+server s1 {
+	rxreq
+	txresp
+} -start
+
+server s2 {
+	rxreq
+	# simulate long running task
+	delay 1.1
+	txresp -hdr "Foo: bar"
+} -start
+
+varnish v1 -vcl {
+	import std;
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+	backend default {
+		.host = "${s1_addr}";
+		.port = "${s1_port}";
+	}
+
+	sub vcl_recv {
+		curl.get("http://${s2_addr}:${s2_port}/curl");
+		std.timestamp("some_operation");
+		return(pass);
+	}
+
+	sub vcl_deliver {
+		# first call to any of response related functions
+		# checks/waits for the curl response
+		set resp.http.x-status = curl.status();
+		set resp.http.x-header = curl.header("Foo");
+		curl.free();
+		std.timestamp("curl_task_finished");
+	}
+
+} -start
+
+logexpect l1 -v v1 -g request {
+	# the 'some_operation' starts almost instantly
+	# and can perform simultaneously
+	expect	* 1001	Timestamp	{some_operation: \S+ 0\.\d+ 0\.\d+}
+
+	# over one second delay (caused by waiting for the curl response)
+	expect	* = 	Timestamp	{curl_task_finished: \S+ 1\.\d+ 1\.\d+}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.x-status == 200
+	expect resp.http.x-header == "bar"
+} -run
+
+logexpect l1 -wait

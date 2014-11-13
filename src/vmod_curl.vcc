@@ -46,3 +46,6 @@ $Function VOID proxy(STRING)
 
 $Function VOID set_proxy(STRING)
 $Function VOID set_method(STRING)
+
+# Set = 1 for the fire & forget mode, 0 (default) otherwise
+$Function VOID set_no_wait(INT)
