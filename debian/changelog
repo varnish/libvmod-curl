@@ -1,3 +1,9 @@
+libvmod-curl (0.2) unstable; urgency=low
+
+  * Added dependency for libuv
+
+ -- Waldek Kozba <100assc@gmail.com>  Thu, 13 Nov 2014 15:22:46 +0100
+
 libvmod-curl (0.1) unstable; urgency=low
 
   * First version

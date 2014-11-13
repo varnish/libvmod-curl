@@ -1,13 +1,13 @@
 Summary: CURL support for Varnish VCL
 Name: vmod-curl
-Version: 0.1
+Version: 0.2
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-curl.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish >= 4.0
-BuildRequires: make, python-docutils, curl-devel > 7.19.0
+Requires: varnish >= 4.0, libuv
+BuildRequires: make, python-docutils, curl-devel > 7.19.0, libuv-devel
 
 %description
 CURL support for Varnish VCL
@@ -35,3 +35,5 @@ rm -rf %{buildroot}
 %changelog
 * Tue Nov 14 2012 Lasse Karstensen <lasse@varnish-software.com> - 0.1-0.20121114
 - Initial version.
+* Thu Nov 13 2014 Waldek Kozba <100assc@gmail.com> - 0.2-0.20141113
+- Added dependencies for libuv.
