@@ -10,4 +10,4 @@ override_dh_gencontrol:
 	fi
 
 %:
-	dh $@
+	dh $@ --with autoreconf
