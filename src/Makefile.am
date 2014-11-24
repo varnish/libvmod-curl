@@ -7,20 +7,15 @@ libvmod_curl_la_LDFLAGS = -module -export-dynamic -avoid-version -shared \
 	$(CURL_LIBS)
 
 libvmod_curl_la_SOURCES = \
-	vmod_curl.c \
-	vmod_curl.h
-nodist_libvmod_curl_la_SOURCES = \
 	vcc_if.c \
-	vcc_if.h
+	vcc_if.h \
+	vmod_curl.c
 
-$(libvmod_curl_la_OBJECTS): vcc_if.h
-
-vcc_if.c vcc_if.h: $(VMODTOOL) $(top_srcdir)/src/vmod_curl.vcc
-	$(PYTHON) $(VMODTOOL) $(top_srcdir)/src/vmod_curl.vcc
+vcc_if.c vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
+	@VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
 .PHONY: $(VMOD_TESTS)
-
 
 $(top_srcdir)/src/tests/*.vtc:
 	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_topbuild=$(abs_top_builddir) $@
