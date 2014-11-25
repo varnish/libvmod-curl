@@ -1,6 +1,6 @@
 Summary: CURL support for Varnish VCL
 Name: vmod-curl
-Version: 0.1
+Version: 0.2
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -17,7 +17,7 @@ BuildRequires: curl-devel > 7.19.0
 CURL support for Varnish VCL
 
 %prep
-%setup -n libvmod-curl-trunk
+%setup -n libvmod-curl-%{version}
 
 %build
 ./configure --prefix=/usr/ --docdir='${datarootdir}/doc/%{name}'
