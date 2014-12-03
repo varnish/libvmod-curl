@@ -1,3 +1,9 @@
+libvmod-curl (0.6) unstable; urgency=medium
+
+  * Packaging bump.
+
+ -- Dag Haavi Finstad <daghf@varnish-software.com>  Wed, 3 Dec 2014 14:23:34 +0100
+
 libvmod-curl (0.5) unstable; urgency=medium
 
   * Packaging bump.
