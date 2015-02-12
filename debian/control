@@ -8,5 +8,5 @@ Vcs-Git: git://github.com/varnish/libvmod-curl.git
 
 Package: libvmod-curl
 Architecture: any
-Depends: varnish, ${misc:Depends}
-Description: CURL for Varnish VCL
+Depends: varnish, ${shlibs:Depends}, ${misc:Depends}, ${Varnish:ABI}
+Description: CURL support for Varnish VCL.
