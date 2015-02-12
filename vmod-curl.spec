@@ -7,7 +7,7 @@ Group: System Environment/Daemons
 Source0: libvmod-curl.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: varnish > 3.0
-BuildRequires: make, python-docutils, curl-devel > 7.19.0
+BuildRequires: make, python-docutils, curl-devel >= 7.15.5
 
 %description
 CURL support for Varnish VCL.
