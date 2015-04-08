@@ -148,31 +148,31 @@ cm_make_key()
 static struct vmod_curl *
 cm_get(const struct vrt_ctx *ctx)
 {
-    struct vmod_curl *cm = pthread_getspecific(cl_key);
+	struct vmod_curl *cm = pthread_getspecific(cl_key);
 
-    unsigned vxid;
-    if (ctx->bo != NULL && ctx->req == NULL) {
-        CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
-        vxid = ctx->bo->vsl->wid;
-    } else {
-        CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
-        vxid = ctx->req->vsl->wid;
-    }
+	unsigned vxid;
+	if (ctx->bo != NULL && ctx->req == NULL) {
+		CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
+		vxid = ctx->bo->vsl->wid;
+	} else {
+		CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
+		vxid = ctx->req->vsl->wid;
+	}
 
-    if (cm == NULL) {
-        cm = malloc(sizeof(struct vmod_curl));
-        AN(cm);
+	if (cm == NULL) {
+		cm = malloc(sizeof(struct vmod_curl));
+		AN(cm);
 
-        cm_init(cm);
-        cm->vxid = vxid;
+		cm_init(cm);
+		cm->vxid = vxid;
 
-        pthread_setspecific(cl_key, cm);
-    }
+		pthread_setspecific(cl_key, cm);
+	}
 
-    if (cm->vxid != vxid) {
+	if (cm->vxid != vxid) {
 		cm_clear(cm);
 		cm->vxid = vxid;
-    }
+	}
 
 	return (cm);
 }
