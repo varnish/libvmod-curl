@@ -1,0 +1,127 @@
+varnishtest "Test curl vmod"
+
+server s1 {
+	rxreq
+	expect req.method == GET
+	txresp -hdr "Foo: bar" -body "Test"
+	accept
+	rxreq
+	expect req.method == GET
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.method == HEAD
+	expect req.bodylen == 0
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.method == POST
+	expect req.bodylen == 3
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.method == GET
+	expect req.url == "http://example.com/"
+	expect req.http.proxy-authorization ~ "Basic"
+	txresp -hdr "Foo: bar"
+	accept
+	rxreq
+	expect req.method == GET
+	expect req.url == "http://example.com/"
+	expect req.http.proxy-authorization ~ "Basic"
+	txresp -hdr "Foo: bar"
+} -start
+
+server s2 -repeat 6 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+	sub vcl_hit {
+		return (fetch);
+	}
+
+	sub vcl_backend_fetch {
+		set bereq.backend = s2;
+	}
+
+	sub vcl_backend_response {
+		if (bereq.http.func == "GET") {
+			curl.get("http://${s1_addr}:${s1_port}");
+		} elsif (bereq.http.func == "FETCH") {
+			curl.fetch("http://${s1_addr}:${s1_port}");
+		} elsif (bereq.http.func == "HEAD") {
+			curl.head("http://${s1_addr}:${s1_port}");
+		} elsif (bereq.http.func == "POST") {
+			curl.post("http://${s1_addr}:${s1_port}", "a=b");
+		} elsif (bereq.http.func == "SET_PROXY") {
+			curl.set_proxy("http://user:secret@${s1_addr}:${s1_port}");
+			curl.get("http://example.com/");
+		} elsif (bereq.http.func == "PROXY") {
+			curl.proxy("http://user:secret@${s1_addr}:${s1_port}");
+			curl.get("http://example.com/");
+		}
+
+		set beresp.status = curl.status();
+		set beresp.http.foo = curl.header("foo");
+		set beresp.http.cl = curl.header("content-length");
+		set beresp.http.body = curl.body();
+	}
+} -start
+
+client c1 {
+	txreq -url "/" -hdr "func: GET"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "4"
+	expect resp.status == 200
+	expect resp.http.body == "Test"
+} -run
+
+client c2 {
+	txreq -url "/" -hdr "func: FETCH"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c3 {
+	txreq -url "/" -hdr "func: HEAD"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c4 {
+	txreq -url "/" -hdr "func: POST"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c5 {
+	txreq -url "/" -hdr "func: SET_PROXY"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
+
+client c6 {
+	txreq -url "/" -hdr "func: PROXY"
+	rxresp
+	expect resp.http.foo == "bar"
+	expect resp.http.cl == "0"
+	expect resp.status == 200
+	expect resp.http.body == ""
+} -run
