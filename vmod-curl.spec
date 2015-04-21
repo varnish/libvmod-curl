@@ -1,6 +1,6 @@
 Summary: CURL support for Varnish VCL
 Name: vmod-curl
-Version: 0.2
+Version: 0.3
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
@@ -40,5 +40,7 @@ rm -rf %{buildroot}
 %{_mandir}/man?/*
 
 %changelog
+* Tue Apr 21 2015 Dag Haavi Finstad <daghf@varnish-software.com> - 0.3
+- Varnish 4.0 support.
 * Tue Nov 14 2012 Lasse Karstensen <lasse@varnish-software.com> - 0.1-0.20121114
 - Initial version.
