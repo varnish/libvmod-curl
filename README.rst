@@ -8,6 +8,11 @@ cURL request during a single VCL phase (i.e. vcl_recv, vcl_backed_response,
 vcl_deliver, etc.). Otherwise, some unexpected behavior may arise. Anyway,
 this is the usual approach when using the VMOD.
 
+WARNING: Using vmod-curl to connect to HTTPS sites is currently unsupported
+and may lead to segmentation faults on VCL load/unload. (openssl library
+intricacies)
+
+
 Usage:
 
 ./configure
