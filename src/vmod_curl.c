@@ -5,9 +5,9 @@
 #include <string.h>
 
 #include "vrt.h"
-#include "vsb.h"
-#include "cache/cache.h"
 
+#include "cache/cache.h"
+#include "vsb.h"
 #include "vcc_if.h"
 #include "config.h"
 
@@ -383,19 +383,19 @@ vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields)
 }
 
 VCL_INT
-vmod_status(const struct vrt_ctx *ctx)
+vmod_status(VRT_CTX)
 {
 	return (cm_get(ctx)->status);
 }
 
 VCL_VOID
-vmod_free(const struct vrt_ctx *ctx)
+vmod_free(VRT_CTX)
 {
 	cm_clear(cm_get(ctx));
 }
 
 VCL_STRING
-vmod_error(const struct vrt_ctx *ctx)
+vmod_error(VRT_CTX)
 {
 	struct vmod_curl *c;
 
@@ -406,7 +406,7 @@ vmod_error(const struct vrt_ctx *ctx)
 }
 
 VCL_STRING
-vmod_header(const struct vrt_ctx *ctx, VCL_STRING header)
+vmod_header(VRT_CTX, VCL_STRING header)
 {
 	struct hdr *h;
 	const char *r = NULL;
@@ -424,25 +424,25 @@ vmod_header(const struct vrt_ctx *ctx, VCL_STRING header)
 }
 
 VCL_STRING
-vmod_body(const struct vrt_ctx *ctx)
+vmod_body(VRT_CTX)
 {
 	return (VSB_data(cm_get(ctx)->body));
 }
 
 VCL_VOID
-vmod_set_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
+vmod_set_timeout(VRT_CTX, VCL_INT timeout)
 {
 	cm_get(ctx)->timeout = timeout;
 }
 
 VCL_VOID
-vmod_set_connect_timeout(const struct vrt_ctx *ctx, VCL_INT timeout)
+vmod_set_connect_timeout(VRT_CTX, VCL_INT timeout)
 {
 	cm_get(ctx)->connect_timeout = timeout;
 }
 
 VCL_VOID
-vmod_set_ssl_verify_peer(const struct vrt_ctx *ctx, VCL_INT verify)
+vmod_set_ssl_verify_peer(VRT_CTX, VCL_INT verify)
 {
 	if (verify)
 		cm_get(ctx)->flags |= F_SSL_VERIFY_PEER;
@@ -451,7 +451,7 @@ vmod_set_ssl_verify_peer(const struct vrt_ctx *ctx, VCL_INT verify)
 }
 
 VCL_VOID
-vmod_set_ssl_verify_host(const struct vrt_ctx *ctx, VCL_INT verify)
+vmod_set_ssl_verify_host(VRT_CTX, VCL_INT verify)
 {
 	if (verify)
 		cm_get(ctx)->flags |= F_SSL_VERIFY_HOST;
@@ -460,19 +460,19 @@ vmod_set_ssl_verify_host(const struct vrt_ctx *ctx, VCL_INT verify)
 }
 
 VCL_VOID
-vmod_set_ssl_cafile(const struct vrt_ctx *ctx, VCL_STRING path)
+vmod_set_ssl_cafile(VRT_CTX, VCL_STRING path)
 {
 	cm_get(ctx)->cafile = path;
 }
 
 VCL_VOID
-vmod_set_ssl_capath(const struct vrt_ctx *ctx, VCL_STRING path)
+vmod_set_ssl_capath(VRT_CTX, VCL_STRING path)
 {
 	cm_get(ctx)->capath = path;
 }
 
 VCL_VOID
-vmod_header_add(const struct vrt_ctx *ctx, VCL_STRING value)
+vmod_header_add(VRT_CTX, VCL_STRING value)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
@@ -488,7 +488,7 @@ vmod_header_add(const struct vrt_ctx *ctx, VCL_STRING value)
 }
 
 VCL_VOID
-vmod_header_remove(const struct vrt_ctx *ctx, VCL_STRING header)
+vmod_header_remove(VRT_CTX, VCL_STRING header)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh;
@@ -511,7 +511,7 @@ vmod_header_remove(const struct vrt_ctx *ctx, VCL_STRING header)
 }
 
 VCL_STRING
-vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
+vmod_escape(VRT_CTX, VCL_STRING str)
 {
 	CURL *curl_handle;
 	char *esc, *r;
@@ -529,7 +529,7 @@ vmod_escape(const struct vrt_ctx *ctx, VCL_STRING str)
 }
 
 VCL_STRING
-vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
+vmod_unescape(VRT_CTX, VCL_STRING str)
 {
 	CURL *curl_handle;
 	char *tmp, *r;
@@ -547,19 +547,19 @@ vmod_unescape(const struct vrt_ctx *ctx, VCL_STRING str)
 }
 
 VCL_VOID
-vmod_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy)
+vmod_proxy(VRT_CTX, VCL_STRING proxy)
 {
 	vmod_set_proxy(ctx, proxy);
 }
 
 VCL_VOID
-vmod_set_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy)
+vmod_set_proxy(VRT_CTX, VCL_STRING proxy)
 {
 	cm_get(ctx)->proxy = proxy;
 }
 
 VCL_VOID
-vmod_set_method(const struct vrt_ctx *ctx, VCL_STRING name)
+vmod_set_method(VRT_CTX, VCL_STRING name)
 {
 	cm_get(ctx)->method = name;
 }
