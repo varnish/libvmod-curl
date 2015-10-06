@@ -1,13 +1,6 @@
 This vmod provides cURL bindings for Varnish so you can use Varnish
 as an HTTP client and fetch headers and bodies from backends.
 
-WARNING: a temporary workaround to allow using the VMOD in 'vcl_backend_.*'
-subroutines has been added (see https://github.com/varnish/libvmod-curl/issues/23).
-The VMOD behaves as usual, but you should always complete execution of each
-cURL request during a single VCL phase (i.e. vcl_recv, vcl_backed_response,
-vcl_deliver, etc.). Otherwise, some unexpected behavior may arise. Anyway,
-this is the usual approach when using the VMOD.
-
 WARNING: Using vmod-curl to connect to HTTPS sites is currently unsupported
 and may lead to segmentation faults on VCL load/unload. (openssl library
 intricacies)
