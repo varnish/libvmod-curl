@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
+
 #include "vcl.h"
 #include "vrt.h"
 
@@ -47,19 +48,25 @@ struct vmod_curl {
 	struct vsb *body;
 };
 
-static pthread_mutex_t cl_mtx = PTHREAD_MUTEX_INITIALIZER;
 static void cm_clear(struct vmod_curl *c);
+
+int
+event_function(const struct vrt_ctx *ctx, struct vmod_priv *priv, enum vcl_event_e e)
+{
+	if (e != VCL_EVENT_LOAD)
+		return (0);
+	curl_global_init(CURL_GLOBAL_ALL);
+	return (0);
+}
 
 static void
 cm_init(struct vmod_curl *c)
 {
-
 	c->magic = VMOD_CURL_MAGIC;
 	VTAILQ_INIT(&c->headers);
 	VTAILQ_INIT(&c->req_headers);
 	c->body = VSB_new_auto();
 	cm_clear(c);
-	curl_global_init(CURL_GLOBAL_ALL);
 }
 
 static void
@@ -131,10 +138,15 @@ cm_clear(struct vmod_curl *c)
 void
 free_func(void *p)
 {
-	struct vmod_curl *vmod_curl_list;
-	CAST_OBJ_NOTNULL(vmod_curl_list, p, VMOD_CURL_MAGIC);
-	FREE_OBJ(vmod_curl_list);
+	struct vmod_curl *c;
 
+	CAST_OBJ_NOTNULL(c, p, VMOD_CURL_MAGIC);
+
+	cm_clear_req_headers(c);
+	cm_clear(c);
+	VSB_delete(c->body);
+
+	FREE_OBJ(c);
 }
 
 static struct vmod_curl *

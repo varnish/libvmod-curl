@@ -1,5 +1,5 @@
 $Module curl 3
-
+$Event event_function
 # GET the URL in the first parameter
 $Function VOID get(STRING, PRIV_TASK)
 
