@@ -48,9 +48,14 @@ VARNISH_VMOD_INCLUDES
 VARNISH_VMOD_DIR
 VARNISH_VMODTOOL
 
-AC_PATH_PROG([VARNISHTEST], [varnishtest])
+# inherit the prefix from Varnish.
+# acessing ac_ variable because AC_PREFIX_DEFAULT acts too early
+ac_default_prefix=$LIBVARNISHAPI_PREFIX
+
+AC_PATH_PROG([VARNISHTEST], [varnishtest], [],
+    [$LIBVARNISHAPI_BINDIR:$LIBVARNISHAPI_SBINDIR:$PATH])
 AC_PATH_PROG([VARNISHD], [varnishd], [],
-    [$PATH:$PATH:`pkg-config varnishapi --variable=sbindir`])
+    [$LIBVARNISHAPI_SBINDIR:$LIBVARNISHAPI_BINDIR:$PATH])
 
 # check if curl supports ms timeout settings
 save_CFLAGS="${CFLAGS}"
