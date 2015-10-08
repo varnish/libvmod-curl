@@ -1,3 +1,8 @@
+
+.. image:: https://travis-ci.org/varnish/libvmod-rtstatus.png
+   :alt: Travis CI badge
+   :target: https://travis-ci.org/varnish/libvmod-rtstatus/
+
 This vmod provides cURL bindings for Varnish so you can use Varnish
 as an HTTP client and fetch headers and bodies from backends.
 
@@ -28,6 +33,7 @@ To use the vmod do something along the lines of:
 		}
 		curl.free();
 	}
+
 
 See src/vmod_curl.vcc for the rest of the callable functions.
 
