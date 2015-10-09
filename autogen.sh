@@ -49,8 +49,9 @@ EOF
 	exit 1
 fi
 set -ex
-aclocal -I m4 -I ${dataroot}/aclocal
+
 $LIBTOOLIZE --copy --force
+aclocal -I m4 -I ${dataroot}/aclocal
 autoheader
 automake --add-missing --copy --foreign
 autoconf
