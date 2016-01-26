@@ -27,6 +27,9 @@ $Function INT status()
 $Function STRING error()
 $Function STRING body()
 
+# set_timeout and set_connect_timeout are not
+# global, but per request functions, therefore
+# they can't be used in vcl_init. 
 $Function VOID set_timeout(INT)
 $Function VOID set_connect_timeout(INT)
 
