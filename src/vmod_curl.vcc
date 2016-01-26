@@ -26,6 +26,9 @@ $Function INT status(PRIV_TASK)
 $Function STRING error(PRIV_TASK)
 $Function STRING body(PRIV_TASK)
 
+# set_timeout and set_connect_timeout are not
+# global, but per request functions, therefore
+# they can't be used in vcl_init. 
 $Function VOID set_timeout(INT, PRIV_TASK)
 $Function VOID set_connect_timeout(INT, PRIV_TASK)
 
