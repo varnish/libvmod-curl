@@ -22,7 +22,7 @@ Make targets:
 * make install - installs your vmod in `VMODDIR`
 * make check - runs the unit tests in ``src/tests/*.vtc``
 
-To use the vmod do something along the lines of:
+To use the vmod do something along the lines of::
 
 	import curl;
 
