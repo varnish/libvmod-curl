@@ -252,6 +252,26 @@ Example
                 // alternative using long string syntax
                 curl.header_add({"X-curl-Request: """});
 
+header_add_all
+--------------
+
+Prototype
+        ::
+
+                header_add_all()
+Return value
+        VOID
+Description
+        Adds all headers in the req object to the request.
+        If used from a backend thread, the bereq object is used.
+        Can be used in combination with header_add() and header_remove().
+        The rules in header_add() apply to header_add_all().
+Example
+        ::
+
+                // copy all headers from the req object in context
+                curl.header_add_all();
+
 header_remove
 -------------
 

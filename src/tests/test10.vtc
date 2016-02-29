@@ -1,0 +1,43 @@
+varnishtest "Test header_add_all"
+
+server s1 {
+	rxreq
+	expect req.http.foo == "bar"
+	expect req.http.be == "0"
+	txresp
+	accept
+	rxreq
+	expect req.http.foobe == "barbe"
+	expect req.http.be == "2"
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	sub vcl_recv {
+		if (req.http.be == "0") {
+			curl.header_add_all();
+			curl.get("http://${s1_addr}:${s1_port}/");
+			return (synth(200));
+		}
+
+		set req.http.be = "2";
+	}
+
+	sub vcl_backend_fetch {
+		set bereq.http.foobe = "barbe";
+		curl.header_add_all();
+		curl.get("http://${s1_addr}:${s1_port}/");
+		return (abandon);
+	}
+} -start
+
+client c1 {
+	txreq -url "/" -hdr "be: 0" -hdr "foo: bar"
+	rxresp
+} -run
+
+client c2 {
+	txreq -url "/" -hdr "be: 1"
+	rxresp
+} -run

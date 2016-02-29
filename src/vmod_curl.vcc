@@ -44,6 +44,9 @@ $Function STRING unescape(STRING)
 $Function VOID header_add(STRING, PRIV_TASK)
 $Function VOID header_remove(STRING, PRIV_TASK)
 
+# Add all request headers from the req (or bereq) object
+$Function VOID header_add_all(PRIV_TASK)
+
 $Function VOID proxy(STRING, PRIV_TASK)
 
 $Function VOID set_proxy(STRING, PRIV_TASK)

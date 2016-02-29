@@ -458,6 +458,28 @@ vmod_header_add(VRT_CTX, VCL_STRING value, struct vmod_priv *priv)
 }
 
 VCL_VOID
+vmod_header_add_all(VRT_CTX, struct vmod_priv *priv)
+{
+	struct http *hp;
+	unsigned u;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+
+	if (VALID_OBJ(ctx->http_bereq, HTTP_MAGIC)) {
+		hp = ctx->http_bereq;
+	} else if(VALID_OBJ(ctx->http_req, HTTP_MAGIC)) {
+		hp = ctx->http_req;
+	} else {
+		return;
+	}
+
+	for (u = HTTP_HDR_FIRST; u < hp->nhd; u++) {
+		Tcheck(hp->hd[u]);
+		vmod_header_add(ctx, hp->hd[u].b, priv);
+	}
+}
+
+VCL_VOID
 vmod_header_remove(VRT_CTX, VCL_STRING header, struct vmod_priv *priv)
 {
 	struct vmod_curl *c;
