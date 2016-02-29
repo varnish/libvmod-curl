@@ -1,51 +1,50 @@
 $Module curl 3
-$Init init_function
-
+$Event event_function
 # GET the URL in the first parameter
-$Function VOID get(STRING)
+$Function VOID get(STRING, PRIV_TASK)
 
 # HEAD the URL in the first parameter
-$Function VOID head(STRING)
+$Function VOID head(STRING, PRIV_TASK)
 
 # Compatibility name for get
-$Function VOID fetch(STRING)
+$Function VOID fetch(STRING, PRIV_TASK)
 
 # POST the URL in the first parameter with the body fields given in
 # the second
-$Function VOID post(STRING, STRING)
+$Function VOID post(STRING, STRING, PRIV_TASK)
 
 # Return the header named in the first argument
-$Function STRING header(STRING)
+$Function STRING header(STRING, PRIV_TASK)
 
 # Free the memory used by headers. Not needed, will be handled
 # automatically if it's not called.
-$Function VOID free()
+$Function VOID free(PRIV_TASK)
 
 # The HTTP status code
-$Function INT status()
+$Function INT status(PRIV_TASK)
 
-$Function STRING error()
-$Function STRING body()
+$Function STRING error(PRIV_TASK)
+$Function STRING body(PRIV_TASK)
 
 # set_timeout and set_connect_timeout are not
 # global, but per request functions, therefore
 # they can't be used in vcl_init. 
-$Function VOID set_timeout(INT)
-$Function VOID set_connect_timeout(INT)
+$Function VOID set_timeout(INT, PRIV_TASK)
+$Function VOID set_connect_timeout(INT, PRIV_TASK)
 
-$Function VOID set_ssl_verify_peer(INT)
-$Function VOID set_ssl_verify_host(INT)
-$Function VOID set_ssl_cafile(STRING)
-$Function VOID set_ssl_capath(STRING)
+$Function VOID set_ssl_verify_peer(INT, PRIV_TASK)
+$Function VOID set_ssl_verify_host(INT, PRIV_TASK)
+$Function VOID set_ssl_cafile(STRING, PRIV_TASK)
+$Function VOID set_ssl_capath(STRING, PRIV_TASK)
 
 $Function STRING escape(STRING)
 $Function STRING unescape(STRING)
 
 # Add / Remove request headers
-$Function VOID header_add(STRING)
-$Function VOID header_remove(STRING)
+$Function VOID header_add(STRING, PRIV_TASK)
+$Function VOID header_remove(STRING, PRIV_TASK)
 
-$Function VOID proxy(STRING)
+$Function VOID proxy(STRING, PRIV_TASK)
 
-$Function VOID set_proxy(STRING)
-$Function VOID set_method(STRING)
+$Function VOID set_proxy(STRING, PRIV_TASK)
+$Function VOID set_method(STRING, PRIV_TASK)

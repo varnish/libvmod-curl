@@ -38,10 +38,20 @@ else
 	esac
 fi
 
+# check for varnishapi.m4 in custom paths
+dataroot=$(pkg-config --variable=datarootdir varnishapi 2>/dev/null)
+if [ -z "$dataroot" ] ; then
+	cat >&2 <<'EOF'
+Package varnishapi was not found in the pkg-config search path.
+Perhaps you should add the directory containing `varnishapi.pc'
+to the PKG_CONFIG_PATH environment variable
+EOF
+	exit 1
+fi
 set -ex
 
 $LIBTOOLIZE --copy --force
-aclocal -I m4
+aclocal -I m4 -I ${dataroot}/aclocal
 autoheader
 automake --add-missing --copy --foreign
 autoconf
