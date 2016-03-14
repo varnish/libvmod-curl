@@ -5,7 +5,7 @@ SUBDIRS = src
 DISTCHECK_CONFIGURE_FLAGS = \
 	VMOD_DIR='$${libdir}/varnish/vmods'
 
-EXTRA_DIST = README.rst LICENSE vmod-curl.spec debian
+EXTRA_DIST = README.rst LICENSE CHANGES.rst
 
 dist_man_MANS = vmod_curl.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)

@@ -1,6 +1,6 @@
 AC_PREREQ(2.64)
-AC_COPYRIGHT([Copyright (c) 2011-2015 Varnish Software AS])
-AC_INIT([libvmod-curl], [1.0.1])
+AC_COPYRIGHT([Copyright (c) 2011-2016 Varnish Software])
+AC_INIT([libvmod-curl], [1.0.2])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(src/vmod_curl.vcc)
 AM_CONFIG_HEADER(config.h)
