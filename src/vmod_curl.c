@@ -483,12 +483,12 @@ VCL_VOID
 vmod_header_remove(VRT_CTX, VCL_STRING header, struct vmod_priv *priv)
 {
 	struct vmod_curl *c;
-	struct req_hdr *rh;
+	struct req_hdr *rh, *rh2;
 	char *split, *s;
 
 	c = cm_get(priv);
 
-	VTAILQ_FOREACH(rh, &c->req_headers, list) {
+	VTAILQ_FOREACH_SAFE(rh, &c->req_headers, list, rh2) {
 		s = strdup(rh->value);
 		AN(s);
 		if ((split = strchr(s, ':')) != NULL)
