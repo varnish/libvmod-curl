@@ -43,7 +43,7 @@ logexpect l1 -v v1 -g request {
 	expect * =	Timestamp	{curl:end: \S+ 0\.2\d+ 0\.\d+}
 
 	expect * 1002	Timestamp	{curl:start: \S+ 0\.\d+ 0\.\d+}
-	expect * =	Timestamp	{curl:end: \S+ 1\.\d+ 0\.\d+}
+	expect * =	Timestamp	{curl:end: \S+ 1\.0\d+ 0\.\d+}
 
 	expect * 1003	Timestamp	{curl:start: \S+ 0\.\d+ 0\.\d+}
 	expect * =	Timestamp	{curl:end: \S+ 1\.3\d+ 0\.\d+}
