@@ -1,7 +1,19 @@
 
 This is a running log of changes to libvmod-curl.
 
-libvmod-curl 1.0.2 (unreleased)
+libvmod-curl 1.0.3 (2016-04-27)
+-------------------------------
+
+* [autoconf] README and CHANGES files are now installed.
+
+Bugfix:
+
+* Use VTAILQ_REMOVE_SAFE when removing headers.
+
+This release was tested with Varnish Cache 4.1.2.
+
+
+libvmod-curl 1.0.2 (2016-03-14)
 -------------------------------
 
 * Code was ported to Varnish Cache 4.1 format.
