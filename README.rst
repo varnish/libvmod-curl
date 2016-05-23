@@ -12,9 +12,20 @@ intricacies)
 
 INSTALLATION
 ============
+
 The source tree is based on autotools to configure the building, and
 does also have the necessary bits in place to do functional unit tests
 using the varnishtest tool.
+
+If you have installed Varnish to a non-standard directory, call
+``autogen.sh`` and ``configure`` with ``PKG_CONFIG_PATH`` pointing to
+the appropriate path. For instance, when varnishd configure was called
+with ``--prefix=$PREFIX``, use
+
+::
+
+    PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+    export PKG_CONFIG_PATH
 
 Make targets:
 
