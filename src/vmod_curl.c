@@ -42,6 +42,9 @@ struct vmod_curl {
 	const char *error;
 	const char *cafile;
 	const char *capath;
+#ifdef HAVE_CURLOPT_UNIX_SOCKET_PATH
+	const char *sun_path;
+#endif
 	VTAILQ_HEAD(, hdr) headers;
 	VTAILQ_HEAD(, req_hdr) req_headers;
 	const char *proxy;
@@ -127,6 +130,9 @@ cm_clear(struct vmod_curl *c)
 	c->timeout = -1;
 	c->cafile = NULL;
 	c->capath = NULL;
+#ifdef HAVE_CURLOPT_UNIX_SOCKET_PATH
+	c->sun_path = NULL;
+#endif
 	c->error = NULL;
 	c->flags = 0;
 	c->method = NULL;
@@ -293,6 +299,12 @@ cm_perform(struct vmod_curl *c)
 	if (c->capath)
 		curl_easy_setopt(curl_handle, CURLOPT_CAPATH, c->capath);
 
+#ifdef HAVE_CURLOPT_UNIX_SOCKET_PATH
+	if (c->sun_path)
+		curl_easy_setopt(curl_handle, CURLOPT_UNIX_SOCKET_PATH,
+		    c->sun_path);
+#endif
+
 	curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, c->method);
 
 	cr = curl_easy_perform(curl_handle);
@@ -439,6 +451,17 @@ VCL_VOID
 vmod_set_ssl_capath(VRT_CTX, VCL_STRING path, struct vmod_priv *priv)
 {
 	cm_get(priv)->capath = path;
+}
+
+VCL_VOID
+vmod_set_unix_path(VRT_CTX, VCL_STRING path, struct vmod_priv *priv)
+{
+#ifdef HAVE_CURLOPT_UNIX_SOCKET_PATH
+	cm_get(priv)->sun_path = path;
+#else
+	VSLb(ctx->vsl, SLT_Error,
+	    "Unix domain socket support not available");
+#endif
 }
 
 VCL_VOID

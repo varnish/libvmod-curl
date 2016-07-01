@@ -51,3 +51,5 @@ $Function VOID proxy(STRING, PRIV_TASK)
 
 $Function VOID set_proxy(STRING, PRIV_TASK)
 $Function VOID set_method(STRING, PRIV_TASK)
+
+$Function VOID set_unix_path(STRING, PRIV_TASK)
