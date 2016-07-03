@@ -258,7 +258,7 @@ cm_perform(struct vmod_curl *c)
 		curl_easy_setopt(curl_handle, CURLOPT_PROXY, c->proxy);
 
 	if (c->timeout > 0) {
-#ifdef CURL_TIMEOUTMS_WORKS
+#ifdef HAVE_CURLOPT_TIMEOUT_MS
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT_MS,
 		    c->timeout);
 #else
@@ -268,7 +268,7 @@ cm_perform(struct vmod_curl *c)
 	}
 
 	if (c->connect_timeout > 0) {
-#ifdef CURL_TIMEOUTMS_WORKS
+#ifdef HAVE_CURLOPT_CONNECTTIMEOUT_MS
 		curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS,
 		    c->connect_timeout);
 #else
