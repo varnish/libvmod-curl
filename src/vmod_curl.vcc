@@ -24,6 +24,13 @@ $Function VOID free(PRIV_TASK)
 $Function INT status(PRIV_TASK)
 
 $Function STRING error(PRIV_TASK)
+
+# A response body can contain chars that are not allowed into headers,
+# e.g. CRLF. If the response body is a binary and/or it contains any
+# special chars, then this funtion MUST be used via synthetic:
+# synthetic(curl.body()). Otherwise it can be assigned to a header
+# resp.http.x-body = curl.body();
+# Test 12 for a complete example.
 $Function STRING body(PRIV_TASK)
 
 # set_timeout and set_connect_timeout are not

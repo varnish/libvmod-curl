@@ -1,0 +1,43 @@
+varnishtest "Test the body() function behaviour via synthetic and via header assignment"
+
+server s1 {
+        rxreq
+        expect req.method == GET
+        # The resp has a body containing special char not allowed in headers
+        txresp -body "Te\r\nst"
+} -start
+
+varnish v1 -vcl+backend {
+        import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+        sub vcl_recv {
+                if (req.http.func == "GET") {
+                        curl.get("http://${s1_addr}:${s1_port}");
+                        return (synth(404));
+                }
+        }
+
+        sub vcl_synth {
+                set resp.status = curl.status();
+                set resp.http.cl = curl.header("content-length");
+
+                # Headers can't contain special chars, therefore we will get a truncated resp body [1]
+                set resp.http.body = curl.body();
+
+                # curl.body() via synthetic will return the complete response body [2]
+                synthetic(curl.body());
+
+                return(deliver);
+	}
+} -start
+
+client c1 {
+        txreq -url "/" -hdr "func: GET"
+        rxresp
+        expect resp.http.cl == "6"
+        expect resp.status == 200
+        # [1]
+        expect resp.http.body == "Te"
+        # [2]
+        expect resp.body == "Te\r\nst"
+} -run
