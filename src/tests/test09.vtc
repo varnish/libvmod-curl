@@ -41,7 +41,7 @@ varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 
 	sub vcl_hit {
-		return (fetch);
+		return (miss);
 	}
 
 	sub vcl_backend_fetch {

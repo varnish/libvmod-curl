@@ -1,4 +1,4 @@
-$Module curl 3
+$Module curl 3 cURL bindings for Varnish
 $Event event_function
 # GET the URL in the first parameter
 $Function VOID get(STRING, PRIV_TASK)
