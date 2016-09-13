@@ -1,0 +1,24 @@
+varnishtest "Skip the C-L when copying the headers"
+
+server s1 {
+	rxreq
+	expect resp.http.content-length == <undef>
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+	sub vcl_recv {
+		curl.header_add_all();
+		curl.get("http://${s1_addr}:${s1_port}/");
+		return (synth(curl.status()));
+	}
+} -start
+
+client c1 {
+	txreq -req POST -body foo
+	rxresp
+	expect resp.status == 200
+} -run
+

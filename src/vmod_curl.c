@@ -498,6 +498,9 @@ vmod_header_add_all(VRT_CTX, struct vmod_priv *priv)
 
 	for (u = HTTP_HDR_FIRST; u < hp->nhd; u++) {
 		Tcheck(hp->hd[u]);
+		if (!strncasecmp("Content-Length", hp->hd[u].b,
+		    strlen("Content-Length")))
+			continue;
 		vmod_header_add(ctx, hp->hd[u].b, priv);
 	}
 }
