@@ -503,8 +503,8 @@ vmod_header_add_all(VRT_CTX, struct vmod_priv *priv)
 
 	for (u = HTTP_HDR_FIRST; u < hp->nhd; u++) {
 		Tcheck(hp->hd[u]);
-		SkipHdr("Content-Length", hp->hd[u]);
-		SkipHdr("Transfer-Encoding", hp->hd[u]);
+		SkipHdr("Content-Length:", hp->hd[u]);
+		SkipHdr("Transfer-Encoding:", hp->hd[u]);
 		vmod_header_add(ctx, hp->hd[u].b, priv);
 	}
 }

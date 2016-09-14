@@ -8,6 +8,10 @@ server s1 {
 	rxreq
 	expect req.http.transfer-encoding == <undef>
 	txresp
+	accept
+	rxreq
+	expect req.http.content-length-custom != <undef>
+	txresp
 } -start
 
 varnish v1 -vcl+backend {
@@ -33,5 +37,7 @@ client c1 {
 	send "\r\n"
 	rxresp
 	expect resp.status == 200
+	txreq -hdr "Content-Length-Custom: 1234"
+	rxresp
+	expect resp.status == 200
 } -run
-
