@@ -51,6 +51,11 @@ struct vmod_curl {
 	struct vsb *body;
 };
 
+#define SkipHdr(n,t) 								\
+	if ((size_t)((t).e - (t).b) > strlen(n) &&				\
+	    !strncasecmp((n), (t).b, strlen((n))))				\
+		continue;
+
 static void cm_clear(struct vmod_curl *c);
 
 int
@@ -498,9 +503,8 @@ vmod_header_add_all(VRT_CTX, struct vmod_priv *priv)
 
 	for (u = HTTP_HDR_FIRST; u < hp->nhd; u++) {
 		Tcheck(hp->hd[u]);
-		if (!strncasecmp("Content-Length", hp->hd[u].b,
-		    strlen("Content-Length")))
-			continue;
+		SkipHdr("Content-Length", hp->hd[u]);
+		SkipHdr("Transfer-Encoding", hp->hd[u]);
 		vmod_header_add(ctx, hp->hd[u].b, priv);
 	}
 }

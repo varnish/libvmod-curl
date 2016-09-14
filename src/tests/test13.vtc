@@ -2,7 +2,11 @@ varnishtest "Skip the C-L when copying the headers"
 
 server s1 {
 	rxreq
-	expect resp.http.content-length == <undef>
+	expect req.http.content-length == <undef>
+	txresp
+	accept
+	rxreq
+	expect req.http.transfer-encoding == <undef>
 	txresp
 } -start
 
@@ -18,6 +22,15 @@ varnish v1 -vcl+backend {
 
 client c1 {
 	txreq -req POST -body foo
+	rxresp
+	expect resp.status == 200
+	send "POST / HTTP/1.1\r\n"
+	send "Transfer-Encoding: chunked\r\n"
+	send "\r\n"
+	send "3\r\n"
+	send "foo"
+	send "0\r\n"
+	send "\r\n"
 	rxresp
 	expect resp.status == 200
 } -run
