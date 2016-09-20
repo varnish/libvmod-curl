@@ -12,8 +12,23 @@ libvmod_curl_la_SOURCES = \
 	vcc_if.h \
 	vmod_curl.c
 
-vcc_if.c vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
+dist_man_MANS = vmod_curl.3
+MAINTAINERCLEANFILES = $(dist_man_MANS)
+
+vcc_if.c vcc_if.h vmod_curl.man.rst: @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
 	@VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
+
+vmod_curl.3: vmod_curl.man.rst
+
+%.1 %.2 %.3 %.4 %.5 %.6 %.7 %.8 %.9:
+if HAVE_RST2MAN
+	${RST2MAN} $< $@
+else
+	@echo "========================================"
+	@echo "You need rst2man installed to make dist"
+	@echo "========================================"
+	@false
+endif
 
 VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
 .PHONY: $(VMOD_TESTS)
@@ -30,4 +45,5 @@ EXTRA_DIST = \
 CLEANFILES = $(builddir)/vcc_if.c \
 	$(builddir)/vcc_if.h \
 	$(builddir)/vmod_curl.man.rst \
-	$(builddir)/vmod_curl.rst
+	$(builddir)/vmod_curl.rst \
+$(dist_man_MANS)
