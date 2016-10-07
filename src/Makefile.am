@@ -30,13 +30,9 @@ else
 	@false
 endif
 
-VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
-.PHONY: $(VMOD_TESTS)
-
-$(top_srcdir)/src/tests/*.vtc:
-	@VARNISHTEST@ -Dvarnishd=@VARNISHD@ -Dvmod_topbuild=$(abs_top_builddir) $@
-
-check: $(VMOD_TESTS)
+VTC_LOG_COMPILER = $(VARNISHTEST) -v -Dvmod_topbuild=$(abs_top_builddir)
+TEST_EXTENSIONS = .vtc
+TESTS = @VMOD_TESTS@
 
 EXTRA_DIST = \
 	vmod_curl.vcc \
