@@ -12,6 +12,10 @@
 #include "vcc_if.h"
 #include "config.h"
 
+#ifndef VRT_CTX
+#define VRT_CTX		const struct vrt_ctx *ctx
+#endif
+
 struct hdr {
 	char *key;
 	char *value;
@@ -59,16 +63,13 @@ struct vmod_curl {
 	unsigned debug_flags;
 };
 
-#define SkipHdr(n,t) 								\
-	if ((size_t)((t).e - (t).b) > strlen(n) &&				\
-	    !strncasecmp((n), (t).b, strlen((n))))				\
-		continue;
-
 static void cm_clear(struct vmod_curl *c);
 
 int
-event_function(const struct vrt_ctx *ctx, struct vmod_priv *priv, enum vcl_event_e e)
+event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
+	(void)ctx;
+	(void)priv;
 	if (e != VCL_EVENT_LOAD)
 		return (0);
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -153,7 +154,7 @@ cm_clear(struct vmod_curl *c)
 	c->status = 0;
 	c->vxid = 0;
 	c->vctx = NULL;
-	c->debug_flags = DBG_NONE;
+	c->debug_flags = 0;
 }
 
 static int
@@ -162,13 +163,16 @@ cm_debug(CURL *handle, curl_infotype type, char *data, size_t size,
 {
 	struct vmod_curl *c;
 
+	(void)handle;
+
 	CAST_OBJ_NOTNULL(c, userdata, VMOD_CURL_MAGIC);
 	CHECK_OBJ_NOTNULL(c->vctx, VRT_CTX_MAGIC);
 	AN(c->debug_flags);
-	/* XXX We should probably run this through strvisx */
 #define DBG(u,l,v) 							\
-	if (type == CURLINFO_##u && (c->debug_flags & v) != 0)		\
-		VSLb(c->vctx->vsl, SLT_Debug, #l ": %.*s", size, data);
+	if ((unsigned)type == CURLINFO_##u &&				\
+	    (c->debug_flags & v) != 0)					\
+		VSLb(c->vctx->vsl, SLT_Debug, #l ": %.*s",		\
+		    (int)size, data);
 #include "debug_flags.h"
 #undef DBG
 	return (0);
@@ -203,8 +207,6 @@ cm_get(struct vmod_priv *priv)
 
 	return (cm);
 }
-
-
 
 static size_t
 recv_data(void *ptr, size_t size, size_t nmemb, void *s)
@@ -283,7 +285,8 @@ cm_perform(struct vmod_curl *c)
 		curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1L);
 
 	if (req_headers)
-		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, req_headers);
+		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER,
+		    req_headers);
 
 	curl_easy_setopt(curl_handle, CURLOPT_URL, c->url);
 	curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1L);
@@ -338,7 +341,7 @@ cm_perform(struct vmod_curl *c)
 		    c->sun_path);
 #endif
 
-	if (c->debug_flags != DBG_NONE) {
+	if (c->debug_flags != 0) {
 		curl_easy_setopt(curl_handle, CURLOPT_DEBUGFUNCTION,
 		    cm_debug);
 		curl_easy_setopt(curl_handle, CURLOPT_DEBUGDATA, c);
@@ -366,15 +369,18 @@ cm_perform(struct vmod_curl *c)
 }
 
 VCL_VOID
-vmod_fetch(const struct vrt_ctx *ctx, VCL_STRING url, struct vmod_priv *priv)
+vmod_fetch(VRT_CTX, struct vmod_priv *priv, VCL_STRING url)
 {
-	vmod_get(ctx, url, priv);
+	vmod_get(ctx, priv, url);
 }
 
 VCL_VOID
-vmod_get(const struct vrt_ctx *ctx, VCL_STRING url, struct vmod_priv *priv)
+vmod_get(VRT_CTX, struct vmod_priv *priv, VCL_STRING url)
 {
 	struct vmod_curl *c;
+
+	(void)ctx;
+
 	c = cm_get(priv);
 	cm_clear_fetch_state(c);
 	c->url = url;
@@ -383,9 +389,12 @@ vmod_get(const struct vrt_ctx *ctx, VCL_STRING url, struct vmod_priv *priv)
 }
 
 VCL_VOID
-vmod_head(const struct vrt_ctx *ctx, VCL_STRING url, struct vmod_priv *priv)
+vmod_head(VRT_CTX, struct vmod_priv *priv, VCL_STRING url)
 {
 	struct vmod_curl *c;
+
+	(void)ctx;
+
 	c = cm_get(priv);
 	cm_clear_fetch_state(c);
 	c->url = url;
@@ -394,9 +403,13 @@ vmod_head(const struct vrt_ctx *ctx, VCL_STRING url, struct vmod_priv *priv)
 }
 
 VCL_VOID
-vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields, struct vmod_priv *priv)
+vmod_post(VRT_CTX, struct vmod_priv *priv, VCL_STRING url,
+    VCL_STRING postfields)
 {
 	struct vmod_curl *c;
+
+	(void)ctx;
+
 	c = cm_get(priv);
 	cm_clear_fetch_state(c);
 	c->url = url;
@@ -406,21 +419,25 @@ vmod_post(const struct vrt_ctx *ctx, VCL_STRING url, VCL_STRING postfields, stru
 }
 
 VCL_INT
-vmod_status(const struct vrt_ctx *ctx, struct vmod_priv *priv)
+vmod_status(VRT_CTX, struct vmod_priv *priv)
 {
+	(void)ctx;
 	return (cm_get(priv)->status);
 }
 
 VCL_VOID
-vmod_free(const struct vrt_ctx *ctx, struct vmod_priv *priv)
+vmod_free(VRT_CTX, struct vmod_priv *priv)
 {
+	(void)ctx;
 	cm_clear(cm_get(priv));
 }
 
 VCL_STRING
-vmod_error(const struct vrt_ctx *ctx, struct vmod_priv *priv)
+vmod_error(VRT_CTX, struct vmod_priv *priv)
 {
 	struct vmod_curl *c;
+
+	(void)ctx;
 
 	c = cm_get(priv);
 	if (c->status != 0)
@@ -429,11 +446,13 @@ vmod_error(const struct vrt_ctx *ctx, struct vmod_priv *priv)
 }
 
 VCL_STRING
-vmod_header(const struct vrt_ctx *ctx, VCL_STRING header, struct vmod_priv *priv)
+vmod_header(VRT_CTX, struct vmod_priv *priv, VCL_STRING header)
 {
 	struct hdr *h;
 	const char *r = NULL;
 	struct vmod_curl *c;
+
+	(void)ctx;
 
 	c = cm_get(priv);
 
@@ -447,78 +466,90 @@ vmod_header(const struct vrt_ctx *ctx, VCL_STRING header, struct vmod_priv *priv
 }
 
 VCL_STRING
-vmod_body(const struct vrt_ctx *ctx, struct vmod_priv *priv)
+vmod_body(VRT_CTX, struct vmod_priv *priv)
 {
+	(void)ctx;
 	return (VSB_data(cm_get(priv)->body));
 }
 
 VCL_VOID
-vmod_set_timeout(VRT_CTX, VCL_INT timeout, struct vmod_priv *priv)
+vmod_set_timeout(VRT_CTX, struct vmod_priv *priv, VCL_INT timeout)
 {
+	(void)ctx;
 	cm_get(priv)->timeout = timeout;
 }
 
 VCL_VOID
-vmod_set_connect_timeout(VRT_CTX, VCL_INT timeout, struct vmod_priv *priv)
+vmod_set_connect_timeout(VRT_CTX, struct vmod_priv *priv, VCL_INT timeout)
 {
+	(void)ctx;
 	cm_get(priv)->connect_timeout = timeout;
 }
 
 VCL_VOID
-vmod_set_ssl_verify_peer(VRT_CTX, VCL_INT verify, struct vmod_priv *priv)
+vmod_set_ssl_verify_peer(VRT_CTX, struct vmod_priv *priv, VCL_INT verify)
 {
-       if (verify)
-               cm_get(priv)->flags |= F_SSL_VERIFY_PEER;
-      else
-	      cm_get(priv)->flags &= ~F_SSL_VERIFY_PEER;
+	(void)ctx;
+
+	if (verify)
+		cm_get(priv)->flags |= F_SSL_VERIFY_PEER;
+	else
+		cm_get(priv)->flags &= ~F_SSL_VERIFY_PEER;
 }
 
 VCL_VOID
-vmod_set_ssl_verify_host(VRT_CTX, VCL_INT verify, struct vmod_priv *priv)
+vmod_set_ssl_verify_host(VRT_CTX, struct vmod_priv *priv, VCL_INT verify)
 {
-       if (verify)
-               cm_get(priv)->flags |= F_SSL_VERIFY_HOST;
-       else
-               cm_get(priv)->flags &= ~F_SSL_VERIFY_HOST;
+	(void)ctx;
+
+	if (verify)
+		cm_get(priv)->flags |= F_SSL_VERIFY_HOST;
+	else
+		cm_get(priv)->flags &= ~F_SSL_VERIFY_HOST;
 }
 
 VCL_VOID
-vmod_set_ssl_cafile(VRT_CTX, VCL_STRING path, struct vmod_priv *priv)
+vmod_set_ssl_cafile(VRT_CTX, struct vmod_priv *priv, VCL_STRING path)
 {
+	(void)ctx;
 	cm_get(priv)->cafile = path;
 }
 
 VCL_VOID
-vmod_set_ssl_capath(VRT_CTX, VCL_STRING path, struct vmod_priv *priv)
+vmod_set_ssl_capath(VRT_CTX, struct vmod_priv *priv, VCL_STRING path)
 {
+	(void)ctx;
 	cm_get(priv)->capath = path;
 }
 
 VCL_VOID
-vmod_set_unix_path(VRT_CTX, VCL_STRING path, struct vmod_priv *priv)
+vmod_set_unix_path(VRT_CTX, struct vmod_priv *priv, VCL_STRING path)
 {
 #ifdef HAVE_CURLOPT_UNIX_SOCKET_PATH
+	(void)ctx;
 	cm_get(priv)->sun_path = path;
 #else
+	(void)path;
+	(void)priv;
 	VSLb(ctx->vsl, SLT_Error,
 	    "Unix domain socket support not available");
 #endif
 }
 
 VCL_VOID
-vmod_header_add(VRT_CTX, VCL_STRING value, struct vmod_priv *priv)
+vmod_header_add(VRT_CTX, struct vmod_priv *priv, VCL_STRING value)
 {
-       struct vmod_curl *c;
-       struct req_hdr *rh;
+	struct vmod_curl *c;
+	struct req_hdr *rh;
 
-       c = cm_get(priv);
+	(void)ctx;
 
-       rh = calloc(1, sizeof(struct req_hdr));
-       AN(rh);
-       rh->value = strdup(value);
-       AN(rh->value);
-
-       VTAILQ_INSERT_HEAD(&c->req_headers, rh, list);
+	c = cm_get(priv);
+	rh = calloc(1, sizeof(struct req_hdr));
+	AN(rh);
+	rh->value = strdup(value);
+	AN(rh->value);
+	VTAILQ_INSERT_HEAD(&c->req_headers, rh, list);
 }
 
 VCL_VOID
@@ -529,28 +560,34 @@ vmod_header_add_all(VRT_CTX, struct vmod_priv *priv)
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 
-	if (VALID_OBJ(ctx->http_bereq, HTTP_MAGIC)) {
+	if (VALID_OBJ(ctx->http_bereq, HTTP_MAGIC))
 		hp = ctx->http_bereq;
-	} else if(VALID_OBJ(ctx->http_req, HTTP_MAGIC)) {
+	else if (VALID_OBJ(ctx->http_req, HTTP_MAGIC))
 		hp = ctx->http_req;
-	} else {
+	else
 		return;
-	}
 
 	for (u = HTTP_HDR_FIRST; u < hp->nhd; u++) {
 		Tcheck(hp->hd[u]);
-		SkipHdr("Content-Length:", hp->hd[u]);
-		SkipHdr("Transfer-Encoding:", hp->hd[u]);
-		vmod_header_add(ctx, hp->hd[u].b, priv);
+#define SKIPHDR(n,t) 							\
+	if ((size_t)((t).e - (t).b) > strlen(n) &&			\
+	    !strncasecmp((n), (t).b, strlen((n))))			\
+		continue;
+		SKIPHDR("Content-Length:", hp->hd[u]);
+		SKIPHDR("Transfer-Encoding:", hp->hd[u]);
+#undef SKIPHDR
+		vmod_header_add(ctx, priv, hp->hd[u].b);
 	}
 }
 
 VCL_VOID
-vmod_header_remove(VRT_CTX, VCL_STRING header, struct vmod_priv *priv)
+vmod_header_remove(VRT_CTX, struct vmod_priv *priv, VCL_STRING header)
 {
 	struct vmod_curl *c;
 	struct req_hdr *rh, *rh2;
 	char *split, *s;
+
+	(void)ctx;
 
 	c = cm_get(priv);
 
@@ -576,13 +613,11 @@ vmod_escape(VRT_CTX, VCL_STRING str)
 
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
-
 	esc = curl_easy_escape(curl_handle, str, 0);
 	AN(esc);
 	r = WS_Copy(ctx->ws, esc, -1);
 	curl_free(esc);
 	curl_easy_cleanup(curl_handle);
-
 	return (r);
 }
 
@@ -591,40 +626,40 @@ vmod_unescape(VRT_CTX, VCL_STRING str)
 {
 	CURL *curl_handle;
 	char *tmp, *r;
+
 	curl_handle = curl_easy_init();
 	AN(curl_handle);
-
 	tmp = curl_easy_unescape(curl_handle, str, 0, NULL);
 	AN(tmp);
 	r = WS_Copy(ctx->ws, tmp, -1);
 	curl_free(tmp);
 	curl_easy_cleanup(curl_handle);
-
 	return (r);
 }
 
 VCL_VOID
-vmod_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy, struct vmod_priv *priv)
+vmod_proxy(VRT_CTX, struct vmod_priv *priv, VCL_STRING proxy)
 {
-	vmod_set_proxy(ctx, proxy, priv);
+	(void)ctx;
+	vmod_set_proxy(ctx, priv, proxy);
 }
 
 VCL_VOID
-vmod_set_proxy(const struct vrt_ctx *ctx, VCL_STRING proxy, struct vmod_priv *priv)
+vmod_set_proxy(VRT_CTX, struct vmod_priv *priv, VCL_STRING proxy)
 {
+	(void)ctx;
 	cm_get(priv)->proxy = proxy;
 }
 
-
 VCL_VOID
-vmod_set_method(const struct vrt_ctx *ctx, VCL_STRING name, struct vmod_priv *priv)
+vmod_set_method(VRT_CTX, struct vmod_priv *priv, VCL_STRING name)
 {
+	(void)ctx;
 	cm_get(priv)->method = name;
 }
 
 VCL_VOID
-vmod_set_debug(const struct vrt_ctx *ctx, VCL_ENUM what,
-    struct vmod_priv *priv)
+vmod_set_debug(VRT_CTX, struct vmod_priv *priv, VCL_ENUM what)
 {
 	struct vmod_curl *c;
 
