@@ -33,7 +33,7 @@ varnish v1 -vcl+backend {
 } -start
 
 logexpect l1 -v v1 -g request {
-	expect * 1001	Debug	{text: Hostname}
+	expect * 1001	Debug	{text: .* ${s1_addr}}
 	expect * =	Debug	{header_out: POST}
 	expect * =	Debug	{data_out: foo=bar}
 	expect * =	Debug	{header_in: HTTP/1.1}
