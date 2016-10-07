@@ -60,3 +60,5 @@ $Function VOID set_proxy(STRING, PRIV_TASK)
 $Function VOID set_method(STRING, PRIV_TASK)
 
 $Function VOID set_unix_path(STRING, PRIV_TASK)
+
+$Function VOID set_debug(ENUM { none, text, header_in, header_out, data_in, data_out }, PRIV_TASK)

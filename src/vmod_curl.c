@@ -23,6 +23,12 @@ struct req_hdr {
 	VTAILQ_ENTRY(req_hdr) list;
 };
 
+enum debug_flags {
+#define DBG(u,l,v)		DBG_##u = v,
+#include "debug_flags.h"
+#undef DBG
+};
+
 struct vmod_curl {
 	unsigned magic;
 #define VMOD_CURL_MAGIC 0xBBB0C87C
@@ -49,6 +55,8 @@ struct vmod_curl {
 	VTAILQ_HEAD(, req_hdr) req_headers;
 	const char *proxy;
 	struct vsb *body;
+	const struct vrt_ctx *vctx;
+	unsigned debug_flags;
 };
 
 #define SkipHdr(n,t) 								\
@@ -144,6 +152,26 @@ cm_clear(struct vmod_curl *c)
 	c->proxy = NULL;
 	c->status = 0;
 	c->vxid = 0;
+	c->vctx = NULL;
+	c->debug_flags = DBG_NONE;
+}
+
+static int
+cm_debug(CURL *handle, curl_infotype type, char *data, size_t size,
+    void *userdata)
+{
+	struct vmod_curl *c;
+
+	CAST_OBJ_NOTNULL(c, userdata, VMOD_CURL_MAGIC);
+	CHECK_OBJ_NOTNULL(c->vctx, VRT_CTX_MAGIC);
+	AN(c->debug_flags);
+	/* XXX We should probably run this through strvisx */
+#define DBG(u,l,v) 							\
+	if (type == CURLINFO_##u && (c->debug_flags & v) != 0)		\
+		VSLb(c->vctx->vsl, SLT_Debug, #l ": %.*s", size, data);
+#include "debug_flags.h"
+#undef DBG
+	return (0);
 }
 
 void
@@ -309,6 +337,14 @@ cm_perform(struct vmod_curl *c)
 		curl_easy_setopt(curl_handle, CURLOPT_UNIX_SOCKET_PATH,
 		    c->sun_path);
 #endif
+
+	if (c->debug_flags != DBG_NONE) {
+		curl_easy_setopt(curl_handle, CURLOPT_DEBUGFUNCTION,
+		    cm_debug);
+		curl_easy_setopt(curl_handle, CURLOPT_DEBUGDATA, c);
+		curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
+	} else
+		curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 0L);
 
 	curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, c->method);
 
@@ -584,4 +620,17 @@ VCL_VOID
 vmod_set_method(const struct vrt_ctx *ctx, VCL_STRING name, struct vmod_priv *priv)
 {
 	cm_get(priv)->method = name;
+}
+
+VCL_VOID
+vmod_set_debug(const struct vrt_ctx *ctx, VCL_ENUM what,
+    struct vmod_priv *priv)
+{
+	struct vmod_curl *c;
+
+	c = cm_get(priv);
+	c->vctx = ctx;
+#define DBG(u,l,v)	if (!strcmp(what, #l)) c->debug_flags |= v;
+#include "debug_flags.h"
+#undef DBG
 }

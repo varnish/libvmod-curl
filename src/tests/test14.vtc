@@ -1,0 +1,36 @@
+varnishtest "Test set_debug"
+
+server s1 {
+	rxreq
+	txresp -body "foo"
+} -start
+
+varnish v1 -vcl+backend {
+	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+
+	sub vcl_recv {
+		curl.set_debug(text);
+		curl.set_debug(header_in);
+		curl.set_debug(header_out);
+		curl.set_debug(data_in);
+		curl.set_debug(data_out);
+		curl.post("http://${s1_addr}:${s1_port}/", "a=b");
+		return (synth(curl.status()));
+	}
+} -start
+
+logexpect l1 -v v1 -g request {
+	expect * 1001	Debug	{text: Hostname}
+	expect * =	Debug	{header_out: POST}
+	expect * =	Debug	{data_out: a=b}
+	expect * =	Debug	{header_in: HTTP/1.1}
+	expect * =	Debug	{data_in: foo}
+	expect * =	Debug	{text: Connection}
+} -start
+
+client c1 {
+	txreq
+	rxresp
+} -run
+
+logexpect l1 -wait
