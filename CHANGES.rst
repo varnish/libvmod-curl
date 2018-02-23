@@ -1,6 +1,20 @@
 
 This is a running log of changes to libvmod-curl.
 
+libvmod-curl 1.0.4 (2018-02-23)
+-------------------------------
+
+* Add unix socket support
+
+* Skip Content-Length when calling header_add_all()
+
+* Skip Transfer-Encoding
+
+* More debug flags: logging headers and bodies
+
+This release was tested with Varnish Cache 5.2.1.
+
+
 libvmod-curl 1.0.3 (2016-04-27)
 -------------------------------
 
