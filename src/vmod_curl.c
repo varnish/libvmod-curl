@@ -1,16 +1,24 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
 
-#include "vcl.h"
-#include "vrt.h"
+#include <cache/cache.h>
+#include <vcl.h>
 
-#include "cache/cache.h"
+#ifndef VRT_H_INCLUDED
+#  include <vrt.h>
+#endif
+
+#ifndef VDEF_H_INCLUDED
+#  include <vdef.h>
+#endif
+
 #include "vsb.h"
 #include "vcc_if.h"
-#include "config.h"
 
 #ifndef VRT_CTX
 #define VRT_CTX		const struct vrt_ctx *ctx
