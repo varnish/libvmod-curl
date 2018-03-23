@@ -10,7 +10,8 @@ libvmod_curl_la_LDFLAGS = -module -export-dynamic -avoid-version -shared \
 libvmod_curl_la_SOURCES = \
 	vcc_if.c \
 	vcc_if.h \
-	vmod_curl.c
+	vmod_curl.c \
+	debug_flags.h
 
 dist_man_MANS = vmod_curl.3
 MAINTAINERCLEANFILES = $(dist_man_MANS)
