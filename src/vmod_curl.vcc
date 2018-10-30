@@ -1,4 +1,5 @@
 $Module curl 3 cURL bindings for Varnish
+$ABI vrt
 $Event event_function
 
 # GET the URL in the first parameter
