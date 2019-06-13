@@ -84,6 +84,12 @@ event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 	return (0);
 }
 
+int
+vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
+{
+	return (event_function(ctx, priv, e));
+}
+
 static void
 cm_init(struct vmod_curl *c)
 {

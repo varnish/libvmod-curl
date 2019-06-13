@@ -40,8 +40,8 @@ server s2 -repeat 6 {
 varnish v1 -vcl+backend {
 	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
 
-	sub vcl_hit {
-		return (miss);
+	sub vcl_recv {
+		return (pass);
 	}
 
 	sub vcl_backend_fetch {
