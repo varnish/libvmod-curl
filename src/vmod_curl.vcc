@@ -1,6 +1,6 @@
-$Module curl 3 cURL bindings for Varnish
-$ABI vrt
+$Module curl 3 "cURL bindings for Varnish"
 $Event event_function
+$ABI vrt
 
 # GET the URL in the first parameter
 $Function VOID get(PRIV_TASK, STRING)
