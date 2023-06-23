@@ -15,8 +15,8 @@ varnish v1 -vcl+backend {
 			curl.set_timeout(200);
 			curl.set_connect_timeout(200);
 		} else {
-			curl.set_timeout(1300);
-			curl.set_connect_timeout(1300);
+			curl.set_timeout(1310);
+			curl.set_connect_timeout(1310);
 		}
 		std.timestamp("curl:start");
 		curl.get("http://${s1_addr}:${s1_port}");
