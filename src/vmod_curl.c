@@ -193,7 +193,7 @@ cm_debug(CURL *handle, curl_infotype type, char *data, size_t size,
 }
 
 void
-free_func(void *p)
+free_func(VRT_CTX, void *p)
 {
 	struct vmod_curl *c;
 
@@ -206,6 +206,12 @@ free_func(void *p)
 	FREE_OBJ(c);
 }
 
+static const struct vmod_priv_methods priv_curl_methods[1] = {{
+	.magic = VMOD_PRIV_METHODS_MAGIC,
+	.type = "cURL",
+	.fini = free_func
+}};
+
 static struct vmod_curl *
 cm_get(struct vmod_priv *priv)
 {
@@ -215,7 +221,7 @@ cm_get(struct vmod_priv *priv)
 		ALLOC_OBJ(cm, VMOD_CURL_MAGIC);
 		cm_init(cm);
 		priv->priv = cm;
-		priv->free = free_func;
+		priv->methods = priv_curl_methods;
 	} else
 		CAST_OBJ_NOTNULL(cm, priv->priv, VMOD_CURL_MAGIC);
 
