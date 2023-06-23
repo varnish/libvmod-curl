@@ -201,7 +201,7 @@ free_func(void *p)
 
 	cm_clear_req_headers(c);
 	cm_clear(c);
-	VSB_delete(c->body);
+	VSB_destroy(&c->body);
 
 	FREE_OBJ(c);
 }
