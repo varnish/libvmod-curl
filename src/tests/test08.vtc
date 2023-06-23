@@ -11,7 +11,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 	sub vcl_recv {
 		curl.set_method("PURGE");
 		curl.head("http://${s1_addr}:${s1_port}");

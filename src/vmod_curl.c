@@ -18,7 +18,7 @@
 #endif
 
 #include "vsb.h"
-#include "vcc_if.h"
+#include "vcc_curl_if.h"
 
 #ifndef VRT_CTX
 #define VRT_CTX		const struct vrt_ctx *ctx

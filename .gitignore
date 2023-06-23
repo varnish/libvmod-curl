@@ -25,8 +25,11 @@ Makefile.in
 /stamp-h1
 /m4/
 !/m4/curl.m4
+test-driver
+src/test-suite.log
+src/tests/*.log
+src/tests/*.trs
 
-/src/vcc_if.c
-/src/vcc_if.h
+/src/vcc_curl_if.*
 /src/*.rst
 /src/*.3

@@ -38,7 +38,7 @@ server s2 -repeat 6 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 
 	sub vcl_recv {
 		return (pass);

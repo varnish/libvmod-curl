@@ -1,46 +1,42 @@
-AM_CPPFLAGS = @VMOD_INCLUDES@
+AM_CFLAGS = $(VARNISHAPI_CFLAGS)
 
-vmoddir = @VMOD_DIR@
+# Modules
 
-vmod_LTLIBRARIES = libvmod_curl.la
-libvmod_curl_la_CFLAGS = $(VMOD_INCLUDES) $(CURL_CFLAGS)
-libvmod_curl_la_LDFLAGS = -module -export-dynamic -avoid-version -shared \
-	$(CURL_LIBS)
+vmod_LTLIBRARIES = \
+	libvmod_curl.la
 
+libvmod_curl_la_CFLAGS = $(AM_CFLAGS) $(CURL_CFLAGS)
+libvmod_curl_la_LDFLAGS = $(VMOD_LDFLAGS) $(CURL_LIBS)
 libvmod_curl_la_SOURCES = \
-	vcc_if.c \
-	vcc_if.h \
 	vmod_curl.c \
 	debug_flags.h
+nodist_libvmod_curl_la_SOURCES = \
+	vcc_curl_if.c \
+	vcc_curl_if.h
 
-dist_man_MANS = vmod_curl.3
-MAINTAINERCLEANFILES = $(dist_man_MANS)
+@BUILD_VMOD_CURL@
 
-vcc_if.c vcc_if.h vmod_curl.man.rst: @VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
-	@VMODTOOL@ $(top_srcdir)/src/vmod_curl.vcc
+# Test suite
 
-vmod_curl.3: vmod_curl.man.rst
-
-%.1 %.2 %.3 %.4 %.5 %.6 %.7 %.8 %.9:
-if HAVE_RST2MAN
-	${RST2MAN} $< $@
-else
-	@echo "========================================"
-	@echo "You need rst2man installed to make dist"
-	@echo "========================================"
-	@false
-endif
-
-VTC_LOG_COMPILER = $(VARNISHTEST) -v -Dvmod_topbuild=$(abs_top_builddir)
+AM_TESTS_ENVIRONMENT = \
+	PATH="$(abs_builddir):$(VARNISH_TEST_PATH):$(PATH)" \
+	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH)"
 TEST_EXTENSIONS = .vtc
+VTC_LOG_COMPILER = varnishtest -lv
+AM_VTC_LOG_FLAGS = \
+	-p vcl_path="$(abs_top_srcdir)/vcl:$(VARNISHAPI_VCLDIR)" \
+	-p vmod_path="$(abs_builddir)/.libs:$(vmoddir):$(VARNISHAPI_VMODDIR)"
 TESTS = @VMOD_TESTS@
 
-EXTRA_DIST = \
-	vmod_curl.vcc \
-	$(VMOD_TESTS)
+# Documentation
 
-CLEANFILES = $(builddir)/vcc_if.c \
-	$(builddir)/vcc_if.h \
-	$(builddir)/vmod_curl.man.rst \
-	$(builddir)/vmod_curl.rst \
-$(dist_man_MANS)
+dist_doc_DATA = \
+	vmod_curl.vcc \
+	$(TESTS)
+
+dist_man_MANS = \
+	vmod_curl.3
+
+
+.rst.1:
+	$(AM_V_GEN) $(RST2MAN) $< $@
