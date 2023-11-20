@@ -7,7 +7,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 	import std;
 
 	sub vcl_recv {
@@ -32,7 +32,7 @@ varnish v1 -vcl+backend {
 
 logexpect l1 -v v1 -g request {
 	expect * 1001	Timestamp	{curl:start: \S+ 0\.\d+ 0\.\d+}
-	expect * =	Timestamp	{curl:end: \S+ 1\.0\d+ 0\.\d+}
+	expect * =	Timestamp	{curl:end: \S+ 1\.0\d+ 1\.0\d+}
 } -start
 
 client c1 {

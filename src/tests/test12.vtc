@@ -7,8 +7,10 @@ server s1 {
         txresp -body "Te\r\nst"
 } -start
 
-varnish v1 -vcl+backend {
-        import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+# validate_headers: this test deliberately tests returning line breaks
+# in a header. Do not use in production.
+varnish v1 -arg "-p feature=-validate_headers" -vcl+backend {
+        import curl;
 
         sub vcl_recv {
                 if (req.http.func == "GET") {

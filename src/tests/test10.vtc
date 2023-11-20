@@ -13,7 +13,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 	sub vcl_recv {
 		if (req.http.be == "0") {
 			curl.header_add_all();

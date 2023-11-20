@@ -7,7 +7,7 @@ server s1 -repeat 2 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 	import std;
 
 	sub vcl_recv {
@@ -15,8 +15,8 @@ varnish v1 -vcl+backend {
 			curl.set_timeout(200);
 			curl.set_connect_timeout(200);
 		} else {
-			curl.set_timeout(1300);
-			curl.set_connect_timeout(1300);
+			curl.set_timeout(1310);
+			curl.set_connect_timeout(1310);
 		}
 		std.timestamp("curl:start");
 		curl.get("http://${s1_addr}:${s1_port}");
@@ -37,10 +37,10 @@ varnish v1 -vcl+backend {
 
 logexpect l1 -v v1 -g request {
 	expect * 1001	Timestamp	{curl:start: \S+ 0\.0\d+ 0\.\d+}
-	expect * =	Timestamp	{curl:end: \S+ 0\.2\d+ 0\.\d+}
+	expect * =	Timestamp	{curl:end: \S+ 0\.2\d+ 0\.2\d+}
 
 	expect * 1002	Timestamp	{curl:start: \S+ 0\.\d+ 0\.\d+}
-	expect * =	Timestamp	{curl:end: \S+ 1\.3\d+ 0\.\d+}
+	expect * =	Timestamp	{curl:end: \S+ 1\.3\d+ 1\.3\d+}
 } -start
 
 client c1 {

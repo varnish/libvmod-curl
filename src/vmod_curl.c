@@ -18,7 +18,7 @@
 #endif
 
 #include "vsb.h"
-#include "vcc_if.h"
+#include "vcc_curl_if.h"
 
 #ifndef VRT_CTX
 #define VRT_CTX		const struct vrt_ctx *ctx
@@ -193,7 +193,7 @@ cm_debug(CURL *handle, curl_infotype type, char *data, size_t size,
 }
 
 void
-free_func(void *p)
+free_func(VRT_CTX, void *p)
 {
 	struct vmod_curl *c;
 
@@ -201,10 +201,16 @@ free_func(void *p)
 
 	cm_clear_req_headers(c);
 	cm_clear(c);
-	VSB_delete(c->body);
+	VSB_destroy(&c->body);
 
 	FREE_OBJ(c);
 }
+
+static const struct vmod_priv_methods priv_curl_methods[1] = {{
+	.magic = VMOD_PRIV_METHODS_MAGIC,
+	.type = "cURL",
+	.fini = free_func
+}};
 
 static struct vmod_curl *
 cm_get(struct vmod_priv *priv)
@@ -215,7 +221,7 @@ cm_get(struct vmod_priv *priv)
 		ALLOC_OBJ(cm, VMOD_CURL_MAGIC);
 		cm_init(cm);
 		priv->priv = cm;
-		priv->free = free_func;
+		priv->methods = priv_curl_methods;
 	} else
 		CAST_OBJ_NOTNULL(cm, priv->priv, VMOD_CURL_MAGIC);
 

@@ -6,7 +6,7 @@ server s1 {
 } -start
 
 varnish v1 -vcl+backend {
-	import curl from "${vmod_topbuild}/src/.libs/libvmod_curl.so";
+	import curl;
 	sub vcl_deliver {
 		set resp.http.x-escaped = curl.escape({"abcd%#=/[]"});
 		set resp.http.x-unescaped = curl.unescape(resp.http.x-escaped);
