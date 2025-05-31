@@ -32,7 +32,7 @@ client c1 {
 	send "Transfer-Encoding: chunked\r\n"
 	send "\r\n"
 	send "3\r\n"
-	send "foo"
+	send "foo\r\n"
 	send "0\r\n"
 	send "\r\n"
 	rxresp
