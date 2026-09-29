@@ -6,6 +6,7 @@ Makefile.in
 *.lo
 *.la
 *~
+*.tar.gz
 
 /aclocal.m4
 /autom4te.cache/
@@ -29,6 +30,7 @@ test-driver
 src/test-suite.log
 src/tests/*.log
 src/tests/*.trs
+vmod_vcs_version.txt
 
 /src/vcc_curl_if.*
 /src/*.rst
