@@ -1,11 +1,11 @@
-varnishtest "Test string escape"
+vtest "Test string escape"
 
 server s1 {
 	rxreq
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	sub vcl_deliver {
 		set resp.http.x-escaped = curl.escape({"abcd%#=/[]"});

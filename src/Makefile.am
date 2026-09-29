@@ -1,4 +1,4 @@
-AM_CFLAGS = $(VARNISHAPI_CFLAGS)
+AM_CFLAGS = $(VCACHEAPI_CFLAGS)
 
 # Modules
 
@@ -13,19 +13,21 @@ libvmod_curl_la_SOURCES = \
 nodist_libvmod_curl_la_SOURCES = \
 	vcc_curl_if.c \
 	vcc_curl_if.h
+vmod_vcs_version.txt: $(nodist_libvmod_curl_la_SOURCES)
+DISTCLEANFILES = vmod_vcs_version.txt
 
 @BUILD_VMOD_CURL@
 
 # Test suite
 
 AM_TESTS_ENVIRONMENT = \
-	PATH="$(abs_builddir):$(VARNISH_TEST_PATH):$(PATH)" \
-	LD_LIBRARY_PATH="$(VARNISH_LIBRARY_PATH)"
+	PATH="$(abs_builddir):$(VCACHE_TEST_PATH):$(PATH)" \
+	LD_LIBRARY_PATH="$(VCACHE_LIBRARY_PATH)"
 TEST_EXTENSIONS = .vtc
-VTC_LOG_COMPILER = varnishtest -lv
+VTC_LOG_COMPILER = vtest -E@VTESTEXT@ -lv
 AM_VTC_LOG_FLAGS = \
-	-p vcl_path="$(abs_top_srcdir)/vcl:$(VARNISHAPI_VCLDIR)" \
-	-p vmod_path="$(abs_builddir)/.libs:$(vmoddir):$(VARNISHAPI_VMODDIR)"
+	-p vcl_path="$(abs_top_srcdir)/vcl:$(VCACHEAPI_VCLDIR)" \
+	-p vmod_path="$(abs_builddir)/.libs:$(vmoddir):$(VCACHEAPI_VMODDIR)"
 TESTS = @VMOD_TESTS@
 
 # Documentation

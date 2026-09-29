@@ -1,4 +1,4 @@
-varnishtest "Test set_debug"
+vtest "Test set_debug"
 
 server s1 {
 	rxreq
@@ -14,7 +14,7 @@ server s1 {
 	txresp -body "bar"
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 
 	sub vcl_recv {

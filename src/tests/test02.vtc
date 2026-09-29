@@ -1,4 +1,4 @@
-varnishtest "Test data timeout"
+vtest "Test data timeout"
 
 server s1 {
 	rxreq
@@ -6,7 +6,7 @@ server s1 {
 	txresp -hdr "Foo: bar"
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	import std;
 
