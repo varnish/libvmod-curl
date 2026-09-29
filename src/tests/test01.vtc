@@ -1,4 +1,4 @@
-varnishtest "Test curl vmod"
+vtest "Test curl vmod"
 
 server s1 {
 	rxreq
@@ -32,7 +32,7 @@ server s1 {
 	txresp -hdr "Foo: bar"
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	sub vcl_recv {
 		if (req.http.func == "GET") {

@@ -1,4 +1,4 @@
-varnishtest "Test sub-second resolution timeouts"
+vtest "Test sub-second resolution timeouts"
 
 server s1 -repeat 2 {
 	rxreq
@@ -6,7 +6,7 @@ server s1 -repeat 2 {
 	txresp -hdr "Foo: bar"
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	import std;
 

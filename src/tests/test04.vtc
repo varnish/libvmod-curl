@@ -1,4 +1,4 @@
-varnishtest "Test strange headers"
+vtest "Test strange headers"
 
 server s1 {
 	rxreq
@@ -21,7 +21,7 @@ server s1 {
 	txresp -hdr "Foo"
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	sub vcl_recv {
 		curl.get("http://${s1_addr}:${s1_port}");

@@ -1,4 +1,4 @@
-varnishtest "Test header_add_all"
+vtest "Test header_add_all"
 
 server s1 {
 	rxreq
@@ -12,7 +12,7 @@ server s1 {
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 	sub vcl_recv {
 		if (req.http.be == "0") {

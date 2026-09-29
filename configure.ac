@@ -43,8 +43,10 @@ if test "x$PYTHON" = "xno"; then
 	AC_MSG_ERROR([Python is needed to build this vmod, please install python.])
 fi
 
-VARNISH_PREREQ([7.3.0])
-VARNISH_VMODS([curl])
+VCACHE_REQUIRE(
+	[[varnish], [9.1.0]],
+	[[vinyl], [9.1.0]])
+VCACHE_VMODS([curl])
 
 AX_CURLOPT_CHECK([CURLOPT_TIMEOUT_MS])
 AX_CURLOPT_CHECK([CURLOPT_CONNECTTIMEOUT_MS])
@@ -62,7 +64,7 @@ AC_OUTPUT
 AS_ECHO("
 	==== $PACKAGE_STRING ====
 
-	varnish:	$VARNISH_VERSION
+	vcache:		${vcacheapi} $VCACHE_VERSION
 	prefix:		$prefix
 	vmoddir:	$vmoddir
 	vcldir:		$vcldir

@@ -1,4 +1,4 @@
-varnishtest "Skip the C-L when copying the headers"
+vtest "Skip the C-L when copying the headers"
 
 server s1 {
 	rxreq
@@ -14,7 +14,7 @@ server s1 {
 	txresp
 } -start
 
-varnish v1 -vcl+backend {
+vcache v1 -vcl+backend {
 	import curl;
 
 	sub vcl_recv {
